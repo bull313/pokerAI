@@ -9,6 +9,14 @@ class Card:
 		14: "Ace"
 	} # Values that have other names (for UI)
 
+	@staticmethod
+	# Method used for UI
+	def get_value_str(value):
+		if value in Card.FACE_CARDS:
+			return Card.FACE_CARDS[value][0].upper()
+		else:
+			return value
+
 	def __init__(self, suit, value):
 		self._suit = suit
 		self._value = value
