@@ -1,5 +1,6 @@
-from collections import Counter
-from card import Card
+from collections    import Counter
+
+from card           import Card
 
 class Hand:
     TYPE_UNKNOWN = -1
@@ -30,7 +31,7 @@ class Hand:
         if self_hand[HAND_TYPE] == other_hand[HAND_TYPE]:
             for i in range( len( self_hand[HAND_VALUES] ) ):                
                 if self_hand[HAND_VALUES][i] != other_hand[HAND_VALUES][i]:
-                    return self_hand[i] < other_hand[i]
+                    return self_hand[HAND_VALUES][i] < other_hand[HAND_VALUES][i]
             return False # False due to equivalence
 
         return self_hand[HAND_TYPE] < other_hand[HAND_TYPE]
@@ -63,6 +64,9 @@ class Hand:
             return "unknown hand"
 
     def get_hand_ranking(self):
+        VALUE = 0
+        FREQUENCY = 1
+
         unique_values = set([ card.get_value() for card in self._cards])
         num_unique_values = len(unique_values)
 
@@ -105,8 +109,9 @@ class Hand:
             # Pair
             hand_values = []
             raw_values = [ card.get_value() for card in self._cards ]
-            raw_values.sort(reverse = True)
             most_common = Counter(raw_values).most_common()
+
+            most_common.sort(key = lambda value_freq: (value_freq[FREQUENCY], value_freq[VALUE]), reverse = True)
 
             for value, _ in most_common:
                 if value not in hand_values:
@@ -118,8 +123,9 @@ class Hand:
             # Two Pair | Three of a kind
             hand_values = []
             raw_values = [ card.get_value() for card in self._cards]
-            raw_values.sort(reverse = True)
             most_common = Counter(raw_values).most_common()
+
+            most_common.sort(key = lambda value_freq: (value_freq[FREQUENCY], value_freq[VALUE]), reverse = True)
 
             hand_type = Hand.TYPE_UNKNOWN
             _, highest_frequency = most_common[0]
@@ -152,8 +158,9 @@ class Hand:
             # Full House | Four of a Kind
             hand_values = []
             raw_values = [ card.get_value() for card in self._cards]
-            raw_values.sort(reverse = True)
             most_common = Counter(raw_values).most_common()
+
+            most_common.sort(key = lambda value_freq: (value_freq[FREQUENCY], value_freq[VALUE]), reverse = True)
 
             hand_type = Hand.TYPE_UNKNOWN
             _, highest_frequency = most_common[0]
