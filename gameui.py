@@ -1,3 +1,6 @@
+def get_input(input_msg): # Wrapper for input function for Python version swapping
+    return input(input_msg)
+
 class GameUI:
     INPUT_STARTING_CHIP_COUNT_STR = "Enter the starting chip count: "
     INPUT_STARTING_CHIP_COUNT_EVEN_ERROR = "Starting chip count must be an even number"
@@ -30,7 +33,7 @@ class GameUI:
         valid_starting_chip_count = False
 
         while not valid_starting_chip_count:
-            starting_chip_count = raw_input(GameUI.INPUT_STARTING_CHIP_COUNT_STR)
+            starting_chip_count = get_input(GameUI.INPUT_STARTING_CHIP_COUNT_STR)
 
             try:
                 starting_chip_count = int(starting_chip_count)
@@ -50,7 +53,7 @@ class GameUI:
         valid_starting_big_blind = False
 
         while not valid_starting_big_blind:
-            starting_big_blind = raw_input(GameUI.INPUT_STARTING_BIG_BLIND_STR)
+            starting_big_blind = get_input(GameUI.INPUT_STARTING_BIG_BLIND_STR)
 
             try:
                 starting_big_blind = int(starting_big_blind)
@@ -96,7 +99,7 @@ class GameUI:
 
     def start_betting_round(self):
         print(GameUI.BETTING_ROUND_PLACEHOLDER_STR)
-        raw_input(GameUI.PRESS_ANY_KEY_PROMPT)
+        get_input(GameUI.PRESS_ANY_KEY_PROMPT)
 
     def show_board(self, board_idx, board_cards):
         print("%s:" % GameUI.GAME_BOARD_NAMES[ board_idx ])
