@@ -7,7 +7,7 @@ Game:
 Imports
 """
 from gamedata   import GameData
-from move       import GameMove
+from gamemove   import GameMove
 from gameui     import GameUI
 
 class Game:
@@ -25,19 +25,26 @@ class Game:
     def __init__(self):
         self._ui = GameUI()
         self._game_data = GameData(Game.NUM_PLAYERS)
+        self._timer_on = False
+        self._blinds_maxed_out = False
 
     """
     Public methods
     """
     def setup(self):
         """
-        Get the starting stack and big blind amount from the user
+        Get the starting stack, big blind amount, and blind increase time interval from the user
         """
-        starting_chip_count = self._ui.get_starting_chip_count()
-        starting_big_blind = self._ui.get_starting_big_blind(starting_chip_count)
+        starting_chip_count     = self._ui.get_starting_chip_count()
+        starting_big_blind      = self._ui.get_starting_big_blind(starting_chip_count)
+        blind_increase_interval = self._ui.get_blind_increase_interval()
 
+        """
+        Set up the game data's stack, big blind, and timer modules
+        """
         self._game_data.set_starting_chip_count(starting_chip_count)
         self._game_data.set_starting_big_blind(starting_big_blind)
+        self._game_data.set_big_blind_increase_interval(blind_increase_interval, self._handle_time_expired)
 
         """
         Set up players and cards
@@ -47,6 +54,7 @@ class Game:
 
     def play_game(self):
         game_over = False
+        self._game_data.mark_next_round()
 
         while not game_over:
             """
@@ -58,6 +66,7 @@ class Game:
             Set up hand
             """
             self._game_data.setup_hand_players()
+            self._manage_timer()
             self._game_data.make_blind_bets()
             players_preflop = self._game_data.pass_cards(Game.NUM_HOLE_CARDS)
             self._ui.display_player_data(players_preflop)
@@ -121,6 +130,54 @@ class Game:
     """
     Private methods
     """
+    def _manage_timer(self):
+        """
+        Reset the timer and increase the blinds if the timer has been turned off
+        """
+        round_number = self._game_data.get_round_number()
+
+        if not self._timer_on:
+
+            if not self._blinds_maxed_out:
+                
+                """
+                Do not raise the blinds on the first round
+                """
+                if round_number != GameData.INITIAL_ROUND_NUMBER:
+                    self._game_data.raise_blinds()
+
+                """
+                Determine if the blinds are at the maximum
+                """
+                if self._game_data.blinds_maxed_out():
+                    self._blinds_maxed_out = True
+
+                """
+                Set the timer and display a confirmation message
+                """
+                new_big_blind = self._game_data.get_big_blind_amt()
+                interval_time = self._game_data.start_timer()
+                self._timer_on = True
+                self._ui.display_timer_set(round_number, new_big_blind, interval_time)
+
+            else:
+                """
+                Display that the current big blind amount will not be raised
+                """
+                self._ui.display_blinds_maxed_out(self._game_data.get_big_blind_amt())
+
+        else:
+            """
+            If the timer is currently on, display the remaining time
+            """
+            remaining_time = self._game_data.get_remaining_time()
+            self._ui.display_current_timer_value(round_number, remaining_time)
+
+    def _handle_time_expired(self):
+        self._ui.display_time_expired()
+        self._game_data.mark_next_round()
+        self._timer_on = False
+
     def _has_multiple_available_betters(self):
         return self._game_data.get_num_available_betters() > 1
 

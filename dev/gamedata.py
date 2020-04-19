@@ -12,7 +12,8 @@ from random     import randint
 
 from deck       import Deck
 from hand       import Hand
-from move       import GameMove
+from gamemove   import GameMove
+from gametimer  import GameTimer
 from player     import Player
 
 class GameData:
@@ -23,6 +24,7 @@ class GameData:
     HEADS_UP_PLAYER_COUNT = 2
     NUM_PLAYERS = 2
     LEFT_POS_OF_PLAYER = 1
+    INITIAL_ROUND_NUMBER = 1
 
     """
     Constructor
@@ -35,6 +37,8 @@ class GameData:
         self._starting_chip_count = 0               ### Beginning stack size
         self._starting_big_blind = 0                ### Beginning big blind size
         self._big_blind_amt = 0                     ### Current big blind size
+        self._round_number = None                   ### Current game round (number of time the big blind has been set)
+        self._game_timer = None                     ### Game timer to track the interval of increasing the big blind
         self._players = None                        ### List of players in the game (to be initialized later)
 
         """
@@ -57,7 +61,16 @@ class GameData:
     """
     Getter Methods
     """
+    def get_round_number(self):
+        return self._round_number
+
+    def get_remaining_time(self):
+        return self._game_timer.get_remaining_time()
+
     def get_blind_positions(self):
+        """
+        Local Variables
+        """
         small_blind = 0
         big_blind = 0
 
@@ -137,6 +150,12 @@ class GameData:
         self._starting_big_blind = bb_amt
         self._big_blind_amt = self._starting_big_blind
 
+    def set_big_blind_increase_interval(self, interval, callback):
+        """
+        Initialize the game timer with the given interval (in minutes)
+        """
+        self._game_timer = GameTimer(interval, callback)
+
     def setup_players(self):
         """
         Create each player and give each player a starting stack
@@ -169,6 +188,22 @@ class GameData:
         """
         self._players_in_hand = self._players[:]
         self._hand_players_played_move = [ False ] * self.get_num_players_in_hand()
+
+    def raise_blinds(self):
+        self._big_blind_amt += self._starting_big_blind
+
+    def blinds_maxed_out(self):
+        """
+        Determine if the current big blind should not be raised any higher
+        """
+        return self._big_blind_amt >= self._starting_chip_count
+
+    def start_timer(self):
+        """
+        Start the game timer and return the amount of time it is set for
+        """
+        self._game_timer.start()
+        return self._game_timer.get_interval_time()
 
     def pass_cards(self, num_hole_cards):
         """
@@ -207,6 +242,15 @@ class GameData:
     """
     Gameplay Methods
     """
+    def mark_next_round(self):
+        """
+        Initialize or increase the round number
+        """
+        if self._round_number is None:
+            self._round_number = GameData.INITIAL_ROUND_NUMBER
+        else:
+            self._round_number += 1
+
     def get_num_available_betters(self):
         """
         Find the number of players who are able to bet chips (stack size is not empty)

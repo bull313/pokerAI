@@ -6,7 +6,8 @@ GameUI:
 """
 Imports
 """
-from move import GameMove
+from gamemove import GameMove
+from gametimer import GameTimer
 
 """
 Wrapper for the input() function:
@@ -23,17 +24,38 @@ class GameUI:
     """
     Starting Chip Count Strings
     """
-    INPUT_STARTING_CHIP_COUNT_STR           = "Enter the starting chip count: "
-    INPUT_STARTING_CHIP_COUNT_EVEN_ERROR    = "Starting chip count must be an even number"
-    INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR = "Starting chip count must be a valid integer"
+    INPUT_STARTING_CHIP_COUNT_STR                   = "Enter the starting chip count: "
+    INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR     = "Starting chip count must be a positive number"
+    INPUT_STARTING_CHIP_COUNT_EVEN_ERROR            = "Starting chip count must be an even number"
+    INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR         = "Starting chip count must be a valid integer"
 
     """
     Starting Big Blind Strings
     """
-    INPUT_STARTING_BIG_BLIND_STR            = "Enter the starting big blind amount: "
-    INPUT_STARTING_BIG_BLIND_EVEN_ERROR     = "Starting big blind must be an even number"
-    INPUT_STARTING_BIG_BLIND_INTEGER_ERROR  = "Starting chip count must be a valid integer"
-    INPUT_STARTING_BIG_BLIND_SIZE_ERROR     = "Starting big blind must be smaller than the starting chip count"
+    INPUT_STARTING_BIG_BLIND_STR                    = "Enter the starting big blind amount: "
+    INPUT_STARTING_BIG_BLIND_NONPOSITIVE_ERROR      = "Starting big blind must be a positive number"
+    INPUT_STARTING_BIG_BLIND_EVEN_ERROR             = "Starting big blind must be an even number"
+    INPUT_STARTING_BIG_BLIND_INTEGER_ERROR          = "Starting big blind must be a valid integer"
+    INPUT_STARTING_BIG_BLIND_SIZE_ERROR             = "Starting big blind must be smaller than the starting chip count"
+
+    """
+    Big Blind Increase Interval Timer
+    """
+    INPUT_BIG_BLIND_INTERVAL_STR                    = "Enter the blig blind increase time interval (in minutes): "
+    INPUT_BIG_BLIND_INTERVAL_NONPOSITIVE_ERROR      = "Blind increase time interval must be a positive number"
+    INPUT_BIG_BLIND_INTERVAL_FLOAT_ERROR            = "Blind increase time interval must be a valid decimal or whole number"
+
+    """
+    Timer Messages
+    """
+    DISPLAY_TIME_EXPIRED            = "\r\rTime is up! Increasing the blinds next round"
+    DISPLAY_TIMER_SET               = "Round %d! Blinds increased to %d and timer has been reset to %s\n"
+    DISPLAY_TIMER_CURRENT_VALUE     = "Time remaning in round %d is %s"
+
+    """
+    Big Blind Maxed Out Messages
+    """
+    DISPLAY_BLINDS_MAXED_OUT  = "Big blind is at the maximum of %d and will not be raised any higher\n"
 
     """
     Display Player Data Strings
@@ -91,7 +113,7 @@ class GameUI:
     """
     Game Winner Strings
     """
-    DISPLAY_GAME_WINNER = "%s wins!"
+    DISPLAY_GAME_WINNER = "%s wins the match!"
     DISPLAY_GAME_OVER   = "GAME OVER"
 
     """
@@ -145,13 +167,15 @@ class GameUI:
             starting_chip_count = get_input(GameUI.INPUT_STARTING_CHIP_COUNT_STR)
 
             """
-            Chip count is valid if it is an even integer
+            Chip count is valid if it is a positive even integer
             """
             try:
 
                 starting_chip_count = int(starting_chip_count)
 
-                if starting_chip_count % 2 != 0:
+                if starting_chip_count <= 0:
+                    print(GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR)
+                elif starting_chip_count % 2 != 0:
                     print(GameUI.INPUT_STARTING_CHIP_COUNT_EVEN_ERROR)
                 else:
                     valid_starting_chip_count = True
@@ -176,13 +200,15 @@ class GameUI:
             starting_big_blind = get_input(GameUI.INPUT_STARTING_BIG_BLIND_STR)
 
             """
-            Big blind is valid if it is an even integer that is smaller than the starting chip count
+            Big blind is valid if it is a positive even integer that is smaller than the starting chip count
             """
             try:
 
                 starting_big_blind = int(starting_big_blind)
 
-                if starting_big_blind % 2 != 0:
+                if starting_big_blind <= 0:
+                    print(GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR)
+                elif starting_big_blind % 2 != 0:
                     print(GameUI.INPUT_STARTING_BIG_BLIND_EVEN_ERROR)
                 elif starting_big_blind > starting_chip_count:
                     print(GameUI.INPUT_STARTING_BIG_BLIND_SIZE_ERROR)
@@ -197,6 +223,48 @@ class GameUI:
         """
         return starting_big_blind
 
+    def get_blind_increase_interval(self):
+        """
+        Local Variables
+        """
+        blind_increase_interval = 0
+        valid_blind_increase_interval = False
+
+        while not valid_blind_increase_interval:
+
+            blind_increase_interval = get_input(GameUI.INPUT_BIG_BLIND_INTERVAL_STR)
+
+            """
+            Interval is valid if it is a positive floating-point number
+            """
+            try:
+
+                blind_increase_interval = float(blind_increase_interval)
+
+                if blind_increase_interval <= 0:
+                    print(GameUI.INPUT_BIG_BLIND_INTERVAL_NONPOSITIVE_ERROR)
+                else:
+                    valid_blind_increase_interval = True
+
+            except:
+                print(GameUI.INPUT_BIG_BLIND_INTERVAL_FLOAT_ERROR)
+
+        """
+        Return Result
+        """
+        return blind_increase_interval
+
+    def display_time_expired(self):
+        print(GameUI.DISPLAY_TIME_EXPIRED)
+
+    def display_timer_set(self, round_num, blind_amt, time_amt):
+        time_str = GameTimer.minutes_to_str(time_amt)
+        print(GameUI.DISPLAY_TIMER_SET % (round_num, blind_amt, time_str))
+
+    def display_current_timer_value(self, round_num, timer_value):
+        timer_str = GameTimer.minutes_to_str(timer_value)
+        print(GameUI.DISPLAY_TIMER_CURRENT_VALUE % (round_num, timer_str))
+
     def display_round_border(self):
         """
         Construct the border string
@@ -207,6 +275,9 @@ class GameUI:
         Print constructed border
         """
         print(border_str)
+
+    def display_blinds_maxed_out(self, amount):
+        print(GameUI.DISPLAY_BLINDS_MAXED_OUT % amount)
 
     def display_player_data(self, players):
         """
