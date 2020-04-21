@@ -20,11 +20,10 @@ class GameData:
     """
     Contants
     """
-    DEALER_IDX = 0
-    HEADS_UP_PLAYER_COUNT = 2
-    NUM_PLAYERS = 2
-    LEFT_POS_OF_PLAYER = 1
-    INITIAL_ROUND_NUMBER = 1
+    DEALER_IDX              = 0 ### Designated position of the dealer
+    HEADS_UP_PLAYER_COUNT   = 2 ### Number of players in a heads-up game
+    INITIAL_ROUND_NUMBER    = 1 ### Round number for the first round
+    LEFT_POS_OF_PLAYER      = 1 ### Relative position to the left of a player
 
     """
     Constructor
@@ -33,21 +32,21 @@ class GameData:
         """
         Game setup properies
         """
-        self._starting_num_players = num_players    ### Number of players in the game
-        self._starting_chip_count = 0               ### Beginning stack size
-        self._starting_big_blind = 0                ### Beginning big blind size
-        self._big_blind_amt = 0                     ### Current big blind size
-        self._round_number = None                   ### Current game round (number of time the big blind has been set)
-        self._game_timer = None                     ### Game timer to track the interval of increasing the big blind
-        self._players = None                        ### List of players in the game (to be initialized later)
+        self._starting_num_players      = num_players   ### Number of players in the game
+        self._starting_chip_count       = 0             ### Beginning stack size
+        self._starting_big_blind        = 0             ### Beginning big blind size
+        self._big_blind_amt             = 0             ### Current big blind size
+        self._round_number              = None          ### Current game round (number of time the big blind has been set)
+        self._game_timer                = None          ### Game timer to track the interval of increasing the big blind
+        self._players                   = None          ### List of players in the game (to be initialized later)
 
         """
         Current hand properies
         """
-        self._pot = 0                               ### Current size of the pot
-        self._players_in_hand = None                ### All players in the current hand
-        self._hand_players_played_move = None       ### Tracks if a player 
-        self._agressor_pos = 0                      ### Position of the player with the highest bet on the table
+        self._pot                       = 0             ### Current size of the pot
+        self._players_in_hand           = None          ### All players in the current hand
+        self._hand_players_played_move  = None          ### Tracks if a player 
+        self._agressor_pos              = 0             ### Position of the player with the highest bet on the table
 
     """
     Helper Methods
@@ -190,13 +189,17 @@ class GameData:
         self._hand_players_played_move = [ False ] * self.get_num_players_in_hand()
 
     def raise_blinds(self):
+        """
+        Blind raising scheme is to add the starting big blind to the current big blind
+        """
         self._big_blind_amt += self._starting_big_blind
 
     def blinds_maxed_out(self):
         """
         Determine if the current big blind should not be raised any higher
+        This is done by checking if the big blind meets or exceeds half of the value of every single chip in the game
         """
-        return self._big_blind_amt >= self._starting_chip_count
+        return self._big_blind_amt >= ( self._starting_chip_count * self._starting_num_players ) / 2
 
     def start_timer(self):
         """

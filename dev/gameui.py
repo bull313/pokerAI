@@ -49,7 +49,7 @@ class GameUI:
     Timer Messages
     """
     DISPLAY_TIME_EXPIRED            = "\r\rTime is up! Increasing the blinds next round"
-    DISPLAY_TIMER_SET               = "Round %d! Blinds increased to %d and timer has been reset to %s\n"
+    DISPLAY_TIMER_SET               = "Round %d! Big blind set to %d and timer has been reset to %s\n"
     DISPLAY_TIMER_CURRENT_VALUE     = "Time remaning in round %d is %s"
 
     """
@@ -152,107 +152,90 @@ class GameUI:
         """
         return cards_str
 
+    def _prompt_value(self, prompt_str, cond_func_str_map, wrapper_function=lambda val: tuple([val]), except_str=""):
+        """
+        Local Variables
+        """
+        current_value = None
+        valid_value = False
+
+        while not valid_value:
+
+            current_value = get_input(prompt_str)
+            current_value = wrapper_function(current_value)
+
+            """
+            Test every condition and if one fails output its corresponding string
+            """
+            try:
+
+                valid_value = True
+
+                for cond_func in cond_func_str_map:
+                    if not cond_func(*current_value):
+                        print( cond_func_str_map[cond_func] )
+                        valid_value = False
+                        break
+
+            except:
+                """
+                If an exception occurrs, print the exception string and try again
+                """
+                print(except_str)
+                valid_value = False
+
+        """
+        Return Result
+        """
+        return current_value
+
     """
     Public Methods
     """
     def get_starting_chip_count(self):
         """
-        Local Variables
+        Create Constraints -> Error Message Map
         """
-        starting_chip_count = 0
-        valid_starting_chip_count = False
-
-        while not valid_starting_chip_count:
-
-            starting_chip_count = get_input(GameUI.INPUT_STARTING_CHIP_COUNT_STR)
-
-            """
-            Chip count is valid if it is a positive even integer
-            """
-            try:
-
-                starting_chip_count = int(starting_chip_count)
-
-                if starting_chip_count <= 0:
-                    print(GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR)
-                elif starting_chip_count % 2 != 0:
-                    print(GameUI.INPUT_STARTING_CHIP_COUNT_EVEN_ERROR)
-                else:
-                    valid_starting_chip_count = True
-                
-            except:
-                print(GameUI.INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR)
+        cond_func_str_map = {
+            lambda val: int(val) > 0        :   GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR,
+            lambda val: int(val) % 2 == 0   :   GameUI.INPUT_STARTING_CHIP_COUNT_EVEN_ERROR
+        }
 
         """
-        Return Result
+        Prompt user for a valid value
         """
-        return starting_chip_count
+        result, = self._prompt_value(GameUI.INPUT_STARTING_CHIP_COUNT_STR, cond_func_str_map, except_str=GameUI.INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR)
+        return int( result )
 
     def get_starting_big_blind(self, starting_chip_count):
         """
-        Local Variables
+        Create Constraints -> Error Message Map
         """
-        starting_big_blind = 0
-        valid_starting_big_blind = False
-
-        while not valid_starting_big_blind:
-
-            starting_big_blind = get_input(GameUI.INPUT_STARTING_BIG_BLIND_STR)
-
-            """
-            Big blind is valid if it is a positive even integer that is smaller than the starting chip count
-            """
-            try:
-
-                starting_big_blind = int(starting_big_blind)
-
-                if starting_big_blind <= 0:
-                    print(GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR)
-                elif starting_big_blind % 2 != 0:
-                    print(GameUI.INPUT_STARTING_BIG_BLIND_EVEN_ERROR)
-                elif starting_big_blind > starting_chip_count:
-                    print(GameUI.INPUT_STARTING_BIG_BLIND_SIZE_ERROR)
-                else:
-                    valid_starting_big_blind = True
-
-            except:
-                print(GameUI.INPUT_STARTING_BIG_BLIND_INTEGER_ERROR)
+        cond_func_str_map = {
+            lambda val: int(val) > 0                    :   GameUI.INPUT_STARTING_BIG_BLIND_NONPOSITIVE_ERROR,
+            lambda val: int(val) % 2 == 0               :   GameUI.INPUT_STARTING_BIG_BLIND_EVEN_ERROR,
+            lambda val: int(val) <= starting_chip_count :   GameUI.INPUT_STARTING_BIG_BLIND_SIZE_ERROR
+        }
 
         """
-        Return Result
+        Prompt user for a valid value
         """
-        return starting_big_blind
+        result, = self._prompt_value(GameUI.INPUT_STARTING_BIG_BLIND_STR, cond_func_str_map, except_str=GameUI.INPUT_STARTING_BIG_BLIND_INTEGER_ERROR)
+        return int( result )
 
     def get_blind_increase_interval(self):
         """
-        Local Variables
+        Create Constraints -> Error Message Map
         """
-        blind_increase_interval = 0
-        valid_blind_increase_interval = False
-
-        while not valid_blind_increase_interval:
-
-            blind_increase_interval = get_input(GameUI.INPUT_BIG_BLIND_INTERVAL_STR)
-
-            """
-            Interval is valid if it is a positive floating-point number
-            """
-            try:
-
-                blind_increase_interval = float(blind_increase_interval)
-
-                if blind_increase_interval <= 0:
-                    print(GameUI.INPUT_BIG_BLIND_INTERVAL_NONPOSITIVE_ERROR)
-                else:
-                    valid_blind_increase_interval = True
-
-            except:
-                print(GameUI.INPUT_BIG_BLIND_INTERVAL_FLOAT_ERROR)
+        cond_func_str_map = {
+            lambda val: float(val) > 0    :   GameUI.INPUT_BIG_BLIND_INTERVAL_NONPOSITIVE_ERROR,
+        }
 
         """
-        Return Result
+        Prompt user for a valid value
         """
-        return blind_increase_interval
+        result, = self._prompt_value(GameUI.INPUT_BIG_BLIND_INTERVAL_STR, cond_func_str_map, except_str=GameUI.INPUT_BIG_BLIND_INTERVAL_FLOAT_ERROR)
+        return float( result )
 
     def display_time_expired(self):
         print(GameUI.DISPLAY_TIME_EXPIRED)
@@ -320,7 +303,7 @@ class GameUI:
     def display_pot(self, pot):
         print(GameUI.DISPLAY_POT_SIZE % pot)
 
-    def prompt_available_moves(self, player, moves, action_to_play):
+    def display_player_move_data(self, player, action_to_play):
         """
         Get the player's hole cards as a string
         """
@@ -334,6 +317,12 @@ class GameUI:
         print(GameUI.DISPLAY_PLAYER_MOVE_REQUIRED_ACTION_RAISE_AMT % action_to_play)
         print(GameUI.DISPLAY_PLAYER_MOVE_MAKE_MOVE % player)
 
+    def prompt_available_moves(self, player, moves, action_to_play):
+        """
+        Display some useful information for the player to see when deciding on a move
+        """
+        self.display_player_move_data(player, action_to_play)
+
         """
         Display each available move
         """
@@ -343,37 +332,18 @@ class GameUI:
         print("")
 
         """
-        Move selection variables
+        Create Constraints -> Error Message Map
         """
-        chosen_move = None
-        chosen_amount = 0
-        valid_move_given = False
+        cond_func_str_map = {
+            lambda move, amt: move is not None and move in moves            :   GameUI.INPUT_PLAYER_MOVE_NOT_RECOGNIZED_ERROR,
+            lambda move, amt: move in moves                                 :   GameUI.INPUT_PLAYER_MOVE_UNAVAIL_MOVE_ERROR,
+            lambda move, amt: amt is None or int(amt) >= action_to_play     :   GameUI.INPUT_PLAYER_MOVE_INSUFFICIENT_AMT_ERROR % action_to_play
+        }
 
-        while not valid_move_given:
-            """
-            Get and parse a move from the user
-            """
-            input_string = get_input( GameUI.INPUT_PLAYER_MOVE_STR % player )
-            chosen_move, chosen_amount = GameMove.parse_input_as_move(input_string)
-
-            """
-            Move must be recognized and available
-            If an amount is required, it must be specified as an integer
-            and it must be at least the required action to play
-            """
-            try:
-
-                if chosen_move is None:
-                    print(GameUI.INPUT_PLAYER_MOVE_NOT_RECOGNIZED_ERROR)
-                elif chosen_move not in moves:
-                    print(GameUI.INPUT_PLAYER_MOVE_NOT_RECOGNIZED_ERROR)
-                elif chosen_amount is not None and int(chosen_amount) < action_to_play:
-                    print(GameUI.INPUT_PLAYER_MOVE_INSUFFICIENT_AMT_ERROR % action_to_play)
-                else:
-                    valid_move_given = True
-
-            except:
-                print()
+        """
+        Prompt user for a valid value
+        """
+        chosen_move, chosen_amount = self._prompt_value(GameUI.INPUT_PLAYER_MOVE_STR % player, cond_func_str_map, wrapper_function=GameMove.parse_input_as_move, except_str=GameUI.INPUT_PLAYER_MOVE_MOVE_INTEGER_ERROR)
 
         """
         Get the chosen amount as an integer now that it is confirmed to be one if specified

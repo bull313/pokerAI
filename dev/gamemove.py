@@ -84,7 +84,7 @@ class GameMove:
         """
         Iteratively search for the matching move name
         """
-        for avail_move in GameMove.MOVE_INPUT_NAMES.keys():
+        for avail_move in GameMove.MOVE_INPUT_NAMES:
             if move == GameMove.MOVE_INPUT_NAMES[avail_move]:
                 move_cmd = avail_move
         

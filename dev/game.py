@@ -14,10 +14,10 @@ class Game:
     """
     Constants
     """
-    BOARD_ROUNDS = [ 3, 1, 1 ]
-    NUM_HOLE_CARDS  = 2
-    NUM_PLAYERS = 2
-    REQUIRED_RAISE_MULTIPLE = 2
+    BOARD_ROUNDS            = [ 3, 1, 1 ]   ### Number of cards to turn on each street
+    NUM_HOLE_CARDS          = 2             ### Number of hole cards per player
+    NUM_PLAYERS             = 2             ### Number of players in the game
+    REQUIRED_RAISE_MULTIPLE = 2             ### Required raise is this value times the current bet
 
     """
     Constructor
@@ -155,14 +155,15 @@ class Game:
                 """
                 Set the timer and display a confirmation message
                 """
-                new_big_blind = self._game_data.get_big_blind_amt()
+                big_blind = self._game_data.get_big_blind_amt()
                 interval_time = self._game_data.start_timer()
                 self._timer_on = True
-                self._ui.display_timer_set(round_number, new_big_blind, interval_time)
+                self._ui.display_timer_set(round_number, big_blind, interval_time)
 
             else:
                 """
                 Display that the current big blind amount will not be raised
+                Do not restart the timer
                 """
                 self._ui.display_blinds_maxed_out(self._game_data.get_big_blind_amt())
 
