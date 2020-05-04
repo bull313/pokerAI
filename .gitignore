@@ -1,3 +1,6 @@
+# Ignore serialized poker files
+*.pok
+
 # VS Code ignores
 .vscode/
 

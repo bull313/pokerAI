@@ -13,6 +13,7 @@ from random     import randint
 from deck       import Deck
 from hand       import Hand
 from gamemove   import GameMove
+from gamesetup  import GameSetup
 from gametimer  import GameTimer
 from player     import Player
 
@@ -32,13 +33,11 @@ class GameData:
         """
         Game setup properies
         """
-        self._starting_num_players      = num_players   ### Number of players in the game
-        self._starting_chip_count       = 0             ### Beginning stack size
-        self._starting_big_blind        = 0             ### Beginning big blind size
+        self._game_setup                = None          ### Holds setup data for the game
         self._big_blind_amt             = 0             ### Current big blind size
-        self._round_number              = None          ### Current game round (number of time the big blind has been set)
         self._game_timer                = None          ### Game timer to track the interval of increasing the big blind
         self._players                   = None          ### List of players in the game (to be initialized later)
+        self._starting_num_players      = num_players   ### Number of players in the game
 
         """
         Current hand properies
@@ -53,7 +52,7 @@ class GameData:
     """
     def _order_players(self, dealer_idx):
         """
-        "Rotate"/"Cut" the list of players so that the player at the dealer index is first on the list
+        Rotate/Cut the list of players so that the player at the dealer index is first on the list
         """
         self._players = self._players[dealer_idx:] + self._players[:dealer_idx]
 
@@ -61,7 +60,7 @@ class GameData:
     Getter Methods
     """
     def get_round_number(self):
-        return self._round_number
+        return self._game_setup.round_number
 
     def get_remaining_time(self):
         return self._game_timer.get_remaining_time()
@@ -71,7 +70,7 @@ class GameData:
         Local Variables
         """
         small_blind = 0
-        big_blind = 0
+        big_blind   = 0
 
         """
         Dermine the small blind position: Dealer if the game is heads-up, player after dealer otherwise
@@ -86,22 +85,28 @@ class GameData:
         return (small_blind, big_blind)
 
     """
+    Get a copy of every player as a list
+    """
+    def get_players(self):
+        return deepcopy(self._players)
+
+    """
     Get a copy of a player at a specificed index
     """
     def get_hand_player(self, player_idx=0):
         return deepcopy(self._players_in_hand[player_idx])
 
     """
-    Get the current pot size
-    """
-    def get_pot(self):
-        return self._pot
-
-    """
     Get the number of remaining players in the hand
     """
     def get_num_players_in_hand(self):
         return len(self._players_in_hand)
+
+    """
+    Get the current pot size
+    """
+    def get_pot(self):
+        return self._pot
 
     """
     Get the position of the player located to the left of the given player position
@@ -139,41 +144,72 @@ class GameData:
     """
     Game Setup Methods
     """
-    def set_starting_chip_count(self, count):
-        self._starting_chip_count = count
+    def setup_game_data(self, game_setup):
+        """
+        Set the game setup object to the passed value
+        """
+        self._game_setup = game_setup
 
-    def set_starting_big_blind(self, bb_amt):
         """
-        Set the starting big blind and set the current big blind to the specified value
+        Set the current big blind to the initial big blind
         """
-        self._starting_big_blind = bb_amt
-        self._big_blind_amt = self._starting_big_blind
+        self._big_blind_amt = self._game_setup.starting_big_blind
 
-    def set_big_blind_increase_interval(self, interval, callback):
         """
-        Initialize the game timer with the given interval (in minutes)
+        Raise the blinds for every passed round number (to catch up on the blind schedule)
         """
-        self._game_timer = GameTimer(interval, callback)
+        for _ in range(GameData.INITIAL_ROUND_NUMBER, self._game_setup.round_number):
+            self.raise_blinds()
 
-    def setup_players(self):
+        """
+        Create a game timer instance to call the blind increase method at the interval time
+        If the initial start time is different from the general interval, include that in the
+        construction of the timer
+        """
+        self._game_timer = GameTimer(
+            self._game_setup.blind_increase_interval,
+            self._game_setup.handle_time_expired, 
+            init_start_time=self._game_setup.init_timestamp
+        )
+
+        """
+        Set up players and cards (load initial player data if there is any)
+        """
+        self.setup_players(loaded_players=self._game_setup.init_player_state)
+        self.setup_cards()
+
+    def setup_players(self, loaded_players=None):
         """
         Create each player and give each player a starting stack
         """
-        self._players = [ Player() for _ in range(self._starting_num_players) ]
 
-        for player in self._players:
-            player.collect_chips(self._starting_chip_count)
+        if loaded_players is None:
+
+            self._players = [ Player() for _ in range(self._starting_num_players) ]
+
+            for player in self._players:
+                player.collect_chips(self._game_setup.starting_chip_count)
+
+            first_dealer = randint(0, self._starting_num_players - 1)
+
+        else:
+
+            self._players = loaded_players
+
+            for player in self._players:
+                player.pass_hole_cards()
+
+            first_dealer = 1
 
         """
         Randomly decide who is the first dealer and order the players to set dealer to first position
         """
-        first_dealer = randint(0, self._starting_num_players - 1)
         self._order_players(first_dealer)
 
     """
     Create a deck of cards and shuffle them
     """
-    def setup_cards(self):
+    def setup_cards(self, loaded_players=False):
         self._deck = Deck()
         self._deck.shuffle()
 
@@ -185,28 +221,27 @@ class GameData:
         Add each player to a player buffer that manages the current hand
         Also create a list that tracks if each player has played in the current betting round at least once
         """
-        self._players_in_hand = self._players[:]
-        self._hand_players_played_move = [ False ] * self.get_num_players_in_hand()
+        self._players_in_hand           = self._players[:]
+        self._hand_players_played_move  = [ False ] * self.get_num_players_in_hand()
 
     def raise_blinds(self):
         """
         Blind raising scheme is to add the starting big blind to the current big blind
         """
-        self._big_blind_amt += self._starting_big_blind
+        self._big_blind_amt += self._game_setup.starting_big_blind
 
     def blinds_maxed_out(self):
         """
         Determine if the current big blind should not be raised any higher
         This is done by checking if the big blind meets or exceeds half of the value of every single chip in the game
         """
-        return self._big_blind_amt >= ( self._starting_chip_count * self._starting_num_players ) / 2
+        return self._big_blind_amt >= ( self._game_setup.starting_chip_count * self._starting_num_players ) / 2
 
     def start_timer(self):
         """
         Start the game timer and return the amount of time it is set for
         """
         self._game_timer.start()
-        return self._game_timer.get_interval_time()
 
     def pass_cards(self, num_hole_cards):
         """
@@ -226,10 +261,9 @@ class GameData:
         """
         Find the small and big blind players
         """
-        small_idx, big_idx = self.get_blind_positions()
-
-        small_blind = self._players_in_hand[small_idx]
-        big_blind = self._players_in_hand[big_idx]
+        small_idx, big_idx  = self.get_blind_positions() 
+        small_blind         = self._players_in_hand[small_idx]
+        big_blind           = self._players_in_hand[big_idx]
         
         """
         Have the small blind and big blind bet blinds
@@ -249,10 +283,10 @@ class GameData:
         """
         Initialize or increase the round number
         """
-        if self._round_number is None:
-            self._round_number = GameData.INITIAL_ROUND_NUMBER
+        if not self._game_setup.round_number:
+            self._game_setup.round_number = GameData.INITIAL_ROUND_NUMBER
         else:
-            self._round_number += 1
+            self._game_setup.round_number += 1
 
     def get_num_available_betters(self):
         """
@@ -309,15 +343,14 @@ class GameData:
         num_players_in_hand = self.get_num_players_in_hand()
 
         for player_idx in range(num_players_in_hand):
-            player = self._players_in_hand[player_idx]
-
             """
             Find all combinations of hole and board cards and find the one with the maximum value
             """
-            hole_cards = player.get_hole_cards()
-            hand_cards = hole_cards + board
-            hand_combinations = combinations(hand_cards, Hand.HAND_SIZE)
-            optimal_hand = max( [ Hand(hand_cards) for hand_cards in hand_combinations ] )
+            player              = self._players_in_hand[player_idx]
+            hole_cards          = player.get_hole_cards()
+            hand_cards          = hole_cards + board
+            hand_combinations   = combinations(hand_cards, Hand.HAND_SIZE)
+            optimal_hand        = max( [ Hand(hand_cards) for hand_cards in hand_combinations ] )
 
             """
             Create the triple and add it to the list
@@ -331,22 +364,23 @@ class GameData:
         player_hand_triple_list.sort(key=lambda player_trip: player_trip[PLAYER_HAND], reverse=True)
 
         """
-        Determine how many players have the best hand
+        Determine the positions of every player with the best hand
         """
-        num_winners = 1
-        best_hand = player_hand_triple_list[0][PLAYER_HAND]
+        winner_positions    = list()
+        _, _, best_hand     = player_hand_triple_list[0]
         num_players_in_hand = self.get_num_players_in_hand()
 
-        for i in range(1, num_players_in_hand):
-            if player_hand_triple_list[i][PLAYER_HAND] == best_hand:
-                num_winners += 1
+        for i in range(num_players_in_hand):
+            hand_pos, _, hand = player_hand_triple_list[i]
+            if hand == best_hand:
+                winner_positions.append(hand_pos)
             else:
                 break
 
         """
         Return the sorted triples and the number of winners
         """
-        return (player_hand_triple_list, num_winners)
+        return (player_hand_triple_list, winner_positions)
 
     def pass_pot_to_winners(self, player_pos_list=[0]):
         """
@@ -363,7 +397,7 @@ class GameData:
     """
     Betting Round Methods
     """
-    def start_betting_round(self):
+    def init_betting_round(self):
         """
         Indicate that no players have played a turn yet
         """
@@ -374,9 +408,9 @@ class GameData:
         """
         Local Variables
         """
-        player = self._players_in_hand[player_idx]
-        stack = player.get_stack_size()
-        max_action = self.get_max_action()
+        player      = self._players_in_hand[player_idx]
+        stack       = player.get_stack_size()
+        max_action  = self.get_max_action()
 
         if move == GameMove.CHECK:
             """
@@ -407,8 +441,8 @@ class GameData:
             """
             CALL: Player bets to match player's action to the current highest bet
             """
-            player_action = player.get_action()
-            amount_to_call = max_action - player_action
+            player_action   = player.get_action()
+            amount_to_call  = max_action - player_action
 
             """
             If the call requires more chips than the player has,
@@ -426,8 +460,8 @@ class GameData:
                 prev_player_idx = self._agressor_pos
 
                 while prev_player_idx != player_idx:
-                    prev_player = self._players_in_hand[prev_player_idx]
-                    prev_player_action = prev_player.release_action()
+                    prev_player         = self._players_in_hand[prev_player_idx]
+                    prev_player_action  = prev_player.release_action()
 
                     prev_player.collect_chips(prev_player_action)
                     prev_player.bet(maximum_call)
@@ -523,10 +557,10 @@ class GameData:
         num_players_in_hand = self.get_num_players_in_hand()
 
         if num_players_in_hand > 1:
-            all_players_played = all(self._hand_players_played_move)
-            player_actions = [ player.get_action() for player in self._players_in_hand ]
-            action_is_equal = player_actions == [ player_actions[0] ] * len(player_actions)
-            round_over = all_players_played and action_is_equal
+            all_players_played  = all(self._hand_players_played_move)
+            player_actions      = [ player.get_action() for player in self._players_in_hand ]
+            action_is_equal     = player_actions == [ player_actions[0] ] * len(player_actions)
+            round_over          = all_players_played and action_is_equal
         else:
             """
             Only one player in hand: the round is automatically over

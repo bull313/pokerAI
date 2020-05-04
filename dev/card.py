@@ -35,8 +35,8 @@ class Card:
     Constructor
     """
     def __init__(self, suit, value):
-        self._suit = suit
-        self._value = value
+        self._suit = suit   ### Card's suit
+        self._value = value ### Card's numeric value
 
     """
     < operator overload based off of the value of the card

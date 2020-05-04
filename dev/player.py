@@ -18,15 +18,25 @@ class Player:
     Constructor
     """
     def __init__(self):
+        """
+        Increment the number of players created counter
+        """
         Player._count += 1
-        self.ID = Player._count
 
-        self._action = 0
-        self._hole_cards = list()
-        self._stack = 0
+        """
+        Public Constant Properties
+        """
+        self.ID = Player._count     ### Player's unique unchanging identification value
+
+        """
+        Private Properties
+        """
+        self._action = 0            ### Money placed directly in front of the player ("bet" money)
+        self._hole_cards = list()   ### Received cards for a hand
+        self._stack = 0             ### Current chip count
 
     """
-    String Representation of a Player
+    String Overrides
     """
     def __str__(self):
         return "Player %d" % self.ID
@@ -59,11 +69,21 @@ class Player:
         return num_to_bet
 
     def release_action(self):
+        """
+        Store the action in a buffer variable and clear the action property
+        """
         action_released = self._action
-        self._action = 0
+        self._action    = 0
+
+        """
+        Return Result
+        """
         return action_released
 
     def collect_chips(self, num_received):
+        """
+        Add the passed value into the stack
+        """
         self._stack += num_received
 
     """

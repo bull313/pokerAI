@@ -49,9 +49,15 @@ class Hand:
         self._cards = cards
 
     """
-    < operator overload based on hand ranking
+    Operator Overloads
     """
     def __lt__(self, other):
+        """
+        < if the type is a lower value than the other
+            OR the types are the same and the best card is lower
+            OR the types are the saem and the best card is the same and the secnod best card is lower...
+                and so on
+        """
         result = False
 
         """
@@ -86,6 +92,9 @@ class Hand:
         return result
 
     def __eq__(self, other):
+        """
+        = If one is not less than or greater than the other
+        """
         return ( not (self < other) ) and ( not (self > other ) )
 
     """
