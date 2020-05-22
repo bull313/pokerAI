@@ -6,18 +6,44 @@ GameInput:
 """
 Imports
 """
-from pynput.keyboard import Key, KeyCode, Listener
+from os                 import name                     as os_name
+from os                 import system                   as os_system
+from pynput.keyboard    import Key, KeyCode, Listener
 
 class GameInput:
 
     """
     Constants
-
-    ---------------------------------------------------------------------------------------------------------------
-    | Contstant name |      Description      | Key Combo String |                     Key Combo                   |
-    ---------------------------------------------------------------------------------------------------------------
     """
-    GAME_SAVE = ( "Ctrl+7",     "Save the game progress",           ( Key.ctrl.value.vk,    int("0x37", 0) ) )
+    HOT_KEY_DEBUG       = False
+    OS_WINDOWS_NAME     = "nt"
+
+    """
+    Hotkey Constants
+    """
+    GAME_SAVE = None
+
+    """
+    Select hot key values based on OS
+    """
+    if os_name == OS_WINDOWS_NAME:
+        """
+        WINDOWS HOTKEYS
+
+        ---------------------------------------------------------------------------------------------------------------
+        | Contstant name |      Description      | Key Combo String |                     Key Combo                   |
+        ---------------------------------------------------------------------------------------------------------------
+        """
+        GAME_SAVE = ( "Ctrl+7",     "Save the game progress",           ( Key.ctrl.value.vk,    int("0x37", 0) ) )
+    else:
+        """
+        MAC HOTKEYS
+
+        ---------------------------------------------------------------------------------------------------------------
+        | Contstant name |      Description      | Key Combo String |                     Key Combo                   |
+        ---------------------------------------------------------------------------------------------------------------
+        """
+        GAME_SAVE = ( "Cmd+7",      "Save the game progress",           ( Key.cmd.value.vk,     int("0x1A", 0) ) )
 
     """
     Constructor
@@ -36,11 +62,13 @@ class GameInput:
         vk = 0
 
         """
-        Convert left-ctrl and right-ctrl to one ctrl
+        Convert left and right keys into the general key (ctrl, cmd)
         Use the type of key parameter to find the virtual key (vk)
         """
         if key in { Key.ctrl_l, Key.ctrl_r }:
             vk = Key.ctrl.value.vk
+        elif key in { Key.cmd_l, Key.cmd_r }:
+            vk = Key.cmd.value.vk
         elif isinstance(key, Key):
             vk = key.value.vk
         elif isinstance(key, KeyCode):
@@ -89,6 +117,13 @@ class GameInput:
         Add the virtual key to the pressed keys list and check if any hot key combos are pressed
         """
         vk = self._convert_key_to_vk(key)
+
+        """
+        If debug mode is on, display the virtual key code
+        """
+        if GameInput.HOT_KEY_DEBUG:
+            print("Virtual Key Code Pressed: %s" % vk)
+
         self._pressed_keys.add(vk)
         self._check_for_hot_keys()
 

@@ -458,7 +458,7 @@ class Game:
         max_action              = self._game_data.get_max_action()
         player_stack            = player.get_stack_size()
         player_action           = player.get_action()
-        player_can_afford_raise = player_stack + player_action >= max_action
+        player_can_afford_raise = player_stack + player_action > max_action
 
         """
         If the player does not have any chips left, there are no options available
