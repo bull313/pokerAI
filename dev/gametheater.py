@@ -25,6 +25,7 @@ class GameTheater:
         Display how the game was set up
         """
         self._ui.display_game_setup(
+            self._setup.starting_num_players,
             self._setup.starting_chip_count, 
             self._setup.starting_big_blind, 
             self._setup.blind_increase_interval
@@ -48,16 +49,17 @@ class GameTheater:
             """
             Gather all data from the hand and determine the current big blind size
             """
-            round_number, init_player_state, timestamp_init, actions, cards, _, _ = hand
-            current_big_blind = self._setup.starting_big_blind * round_number
+            round_number, init_player_state, timestamp_init, actions, cards, _, _   = hand
+            current_big_blind                                                       = self._setup.starting_big_blind * round_number
+            # TODO: put blind increase schedule as a lambda function in game setup
 
             """
             Display all hand data
             """
-            self._ui.display_timer_set(round_number, current_big_blind, timestamp_init)
-            self._ui.display_player_data(init_player_state)
-            self._ui.show_board(cards)
-            self._ui.show_actions(actions)
+            self._ui.display_timer_set(round_number, current_big_blind, timestamp_init, past=True)
+            self._ui.display_player_data(init_player_state, self._setup.button_positions)
+            self._ui.display_board(cards)
+            self._ui.display_actions(actions)
 
             """
             Wait for user acknowledgement

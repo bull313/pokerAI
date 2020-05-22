@@ -27,14 +27,14 @@ class Hand:
 
     HAND_STRINGS = {
         TYPE_HIGH_CARD         : "%s high",
-        TYPE_PAIR              : "pair of %ss, %s high",
-        TYPE_TWO_PAIR          : "pair of %ss and %ss, %s high",
-        TYPE_THREE_OF_A_KIND   : "set of %ss, %s high",
-        TYPE_STRAIGHT          : "%s-high straight",
-        TYPE_FLUSH             : "%s-high flush",
-        TYPE_FULL_HOUSE        : "full house, %ss full of %ss",
+        TYPE_PAIR              : "a pair of %ss, %s high",
+        TYPE_TWO_PAIR          : "two pair of %ss and %ss, %s high",
+        TYPE_THREE_OF_A_KIND   : "trip %ss, %s high",
+        TYPE_STRAIGHT          : "a %s-high straight",
+        TYPE_FLUSH             : "a %s-high flush",
+        TYPE_FULL_HOUSE        : "a full house, %ss full of %ss",
         TYPE_FOUR_OF_A_KIND    : "quad %ss, %s high",
-        TYPE_STRAIGHT_FLUSH    : "%s-high straight flush"
+        TYPE_STRAIGHT_FLUSH    : "a %s-high straight flush"
     }
 
     HAND_SIZE = 5

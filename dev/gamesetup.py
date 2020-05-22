@@ -10,6 +10,8 @@ class GameSetup:
         No methods are necessary and all properties are public
     """
     def __init__(self):
+        self.button_positions           = None  ### Index value for the dealer, small blind, and big blind
+        self.starting_num_players       = 0     ### Number of players to begin the game
         self.starting_chip_count        = 0     ### Initial chip count for each player in the game
         self.starting_big_blind         = 0     ### Initial value of the big blind
         self.blind_increase_interval    = 0     ### Rate (in minutes) that the blinds increase

@@ -24,8 +24,10 @@ class Game:
     GAME_CODE_NO_PLAY                   = 4             ### Game is set not to play or play back any game
     NUM_CARDS_FOR_BOARD_TYPE            = [ 3, 1, 1 ]   ### Number of cards to turn on each street
     NUM_HOLE_CARDS                      = 2             ### Number of hole cards per player
-    NUM_PLAYERS                         = 2             ### Number of players in the game
+    NUM_PLAYERS_MIN                     = 2             ### Minimum number of players to start the game
+    NUM_PLAYERS_MAX                     = 12            ### Maximum number of players to start the game
     REQUIRED_RAISE_MULTIPLE             = 2             ### Required raise is this value times the current bet
+    SHOW_FOLDED_HANDS                   = True          ### Show the remaining player's hand if folded to that player?
 
     """
     Constructor
@@ -34,15 +36,16 @@ class Game:
         """
         Game Properties
         """
-        self._blinds_maxed_out  = False                         ### Are the blinds at the highest value?
-        self._board             = list()                        ### List of community cards
-        self._board_idx         = 0                             ### List address for the name of the board
-        self._game_data         = GameData(Game.NUM_PLAYERS)    ### Poker Data Interface Object
-        self._game_play_code    = False                         ### What kind of game are we playing or playing back (new/load)?
-        self._game_save         = None                          ### Object that manages saving a game finished or in progress
-        self._game_theater      = None                          ### Plays back a finished game
-        self._hand_actions      = list()                        ### List of actions that were made in a hand
-        self._ui                = GameUI()                      ### User Interface Object 
+        self._blinds_maxed_out      = False         ### Are the blinds at the highest value?
+        self._board                 = list()        ### List of community cards
+        self._board_idx             = 0             ### List address for the name of the board
+        self._game_data             = GameData()    ### Poker Data Interface Object
+        self._game_play_code        = False         ### What kind of game are we playing or playing back (new/load)?
+        self._game_save             = None          ### Object that manages saving a game finished or in progress
+        self._game_theater          = None          ### Plays back a finished game
+        self._hand_actions          = list()        ### List of actions that were made in a hand
+        self._ui                    = GameUI()      ### User Interface Object
+        self._num_remaining_players = 0             ### Number of remaining players in the game
 
     """
     Public methods
@@ -152,9 +155,16 @@ class Game:
         """
         current_time = self._manage_timer()
         self._game_data.setup_hand_players()
+        self._game_data.setup_pot()
         self._game_data.make_blind_bets()
         players_preflop = self._game_data.pass_cards(Game.NUM_HOLE_CARDS)
-        self._ui.display_player_data(players_preflop)
+
+        """
+        Get notable positions to label them (dealer, small blind, big blind)
+        """
+        small_blind_pos, big_blind_pos  = self._game_data.get_blind_positions()
+        notable_positions               = ( GameData.DEALER_IDX, small_blind_pos, big_blind_pos )
+        self._ui.display_player_data(players_preflop, self._game_data.get_button_positions())
 
         """
         Begin hand save snapshot
@@ -164,13 +174,17 @@ class Game:
         self._game_save.begin_hand_snapshot(round_number, players_preflop, current_time)
 
     def _perform_showdown(self):
-        ordered_player_hand_triples, winner_positions = self._game_data.evaluate_hands(self._board)
-        
-        """
-        Display winning players and pass the pot to them
-        """
-        self._ui.show_results(ordered_player_hand_triples, len(winner_positions))
-        self._game_data.pass_pot_to_winners(player_pos_list=winner_positions)
+        num_pots = self._game_data.get_num_pots()
+
+        for pot_idx in range(num_pots):
+            ordered_player_hand_triples, winner_positions = self._game_data.evaluate_hands(pot_idx, self._board)
+            
+            """
+            Display winning players and pass the pot to them
+            """
+            idx = pot_idx if num_pots > 1 else None
+            self._ui.display_showdown_results(ordered_player_hand_triples, len(winner_positions), pot_idx=idx)
+            self._game_data.pass_pot_to_winners(pot_idx, player_pos_list=winner_positions)
 
     def _play_hand(self):
         """
@@ -179,7 +193,7 @@ class Game:
         Preflop
         """
         round_folded = self._open_for_betting(preflop=True)
-        self._board.clear()
+        self._board.clear() # TODO: board should be part of game data class?
 
         if not round_folded:
             """
@@ -196,9 +210,16 @@ class Game:
             """
             Pass pot to the only remaining player
             """
-            self._game_data.pass_pot_to_winners()
-            remaining_player = self._game_data.get_hand_player()
-            self._ui.show_folded_round(remaining_player)
+            num_pots = self._game_data.get_num_pots()
+
+            for pot_idx in range(num_pots):
+                self._game_data.pass_pot_to_winners(pot_idx)
+
+                """
+                Display results
+                """
+                remaining_player = self._game_data.get_hand_player(pot_idx=pot_idx)
+                self._ui.display_folded_round(remaining_player, Game.SHOW_FOLDED_HANDS, pot_idx=pot_idx)
 
         else:
             """
@@ -210,15 +231,23 @@ class Game:
         """
         Remove any players who are out of chips
         """
-        game_over = False
-        winner = None
-        self._game_data.eliminate_busted_players()
+        game_over           = False
+        winner              = None
+        eliminated_players  = self._game_data.eliminate_busted_players()
+
+        """
+        Display eliminated players with their ranks
+        And update the number of remaining players in the game
+        """
+        for player in eliminated_players:
+            self._ui.display_player_eliminated(player, self._num_remaining_players)
+            self._num_remaining_players -= 1
 
         """
         Get player data and current time stamp to complete hand snapshot
         """
-        players = self._game_data.get_players()
-        timestamp = self._game_data.get_remaining_time()
+        players     = self._game_data.get_players()
+        timestamp   = self._game_data.get_remaining_time()
         self._game_save.end_hand_snapshot(self._hand_actions[:], self._board[:], players, timestamp)
         
         """
@@ -250,15 +279,26 @@ class Game:
         Get the starting stack, big blind amount, and blind increase time interval from the user
         """
         game_setup                          = GameSetup()
+        game_setup.starting_num_players     = self._ui.get_num_players(Game.NUM_PLAYERS_MIN, Game.NUM_PLAYERS_MAX)
         game_setup.starting_chip_count      = self._ui.get_starting_chip_count()
         game_setup.starting_big_blind       = self._ui.get_starting_big_blind(game_setup.starting_chip_count)
         game_setup.blind_increase_interval  = self._ui.get_blind_increase_interval()
         game_setup.handle_time_expired      = self._handle_time_expired
 
         """
+        Initialize the number of remaining players
+        """
+        self._num_remaining_players = game_setup.starting_num_players
+
+        """
         Set up the game data with the received values
         """
         self._game_data.setup_game_data(game_setup)
+
+        """
+        Save the button positions
+        """
+        game_setup.button_positions = self._game_data.get_button_positions()
 
         """
         Save the game setup
@@ -307,7 +347,6 @@ class Game:
                 self._game_play_code = Game.GAME_CODE_NO_PLAY
             
         else:
-
             """
             Game is not complete yet
             Prompt user to load and continue this game or continue creating a new game with risk 
@@ -334,9 +373,18 @@ class Game:
                     If at least one hand was saved, load the player data and timestamp saved after the
                     last saved hand
                     Otherwise do not load any player or timestamp data
+
+                    Also set the number of remaining players
                     """
-                    last_hand = game_hands[-1]
-                    round_number, _, _, _, _, player_state_final, timestamp_final = last_hand
+                    last_hand                                                       = game_hands[-1]
+                    round_number, _, _, _, _, player_state_final, timestamp_final   = last_hand
+                    self._num_remaining_players                                     = len(player_state_final)
+                else:
+                    """
+                    No hands played yet:
+                        Set the number of remaining players to the initial number of players specified in setup
+                    """
+                    self._num_remaining_players = game_setup.starting_num_players
                 
                 """
                 Package the load game values and set up the loaded game
@@ -355,6 +403,7 @@ class Game:
                 This means that if the user saves this new game at any point,
                 the old game will be completely overwritten
                 """
+                self._game_save.clear_hand_history()
                 self._ui.display_overwrite_warning()
 
     def _welcome(self):
@@ -427,8 +476,8 @@ class Game:
                 Set the timer and display a confirmation message
                 """
                 self._game_data.start_timer()
-                remaining_time = self._game_data.get_remaining_time()
-                big_blind = self._game_data.get_big_blind_amt()
+                remaining_time  = self._game_data.get_remaining_time()
+                big_blind       = self._game_data.get_big_blind_amt()
                 self._ui.display_timer_set(round_number, big_blind, remaining_time)
 
             else:
@@ -517,9 +566,13 @@ class Game:
 
     def _is_hand_over(self):
         """
-        Determine if the hand is over by detecting if there are fewer than 2 players left in the hand
+        Determine if the hand is over
+        Check if there is at least one side pot. In this case, the main pot must go to showdown
+        Check if there are at least two players contending in the main pot. In this case, betting can still take place
         """
-        return self._game_data.get_num_players_in_hand() < 2
+        num_pots            = self._game_data.get_num_pots()
+        num_players_in_hand = self._game_data.get_num_players_in_hand()
+        return ( num_pots < 2 ) and ( num_players_in_hand < 2 )
 
     def _has_multiple_available_betters(self):
         """
@@ -555,7 +608,7 @@ class Game:
             """
             Setup: Get a copy of the acting player for UI puproses
             """
-            player = self._game_data.get_hand_player(current_player_idx)
+            player = self._game_data.get_hand_player(player_idx=current_player_idx)
             num_players_in_hand_before_move = self._game_data.get_num_players_in_hand()
 
             """
@@ -569,8 +622,7 @@ class Game:
                 Show the pot and community cards if postflop
                 """
                 if preflop is False:
-                    self._ui.display_pot(self._game_data.get_pot())
-                    self._ui.show_board(self._board, board_idx=self._board_idx)
+                    self._ui.display_board(self._board, board_idx=self._board_idx)
 
                 chosen_move, chosen_amount = self._ui.prompt_available_moves(player, available_moves, action_to_play)
                 adjusted_amount = self._game_data.play_move(current_player_idx, chosen_move, chosen_amount)
@@ -594,21 +646,18 @@ class Game:
             """
             still_in_hand = self._game_data.get_num_players_in_hand() == num_players_in_hand_before_move
 
-            if still_in_hand:
-
-                player          = self._game_data.get_hand_player(current_player_idx)
-                player_action   = player.get_action()
-
-                if player_action < self._game_data.get_max_action():
-                    self._game_data.set_action_for_all_players(player_action)
-
             """
             Cleanup: Find the next player to act and determine if the round is over
             """
-            current_player_idx = self._game_data.get_next_player_pos(current_player_idx)
-            round_over = self._game_data.is_round_over()
+            current_player_idx  = self._game_data.get_next_player_pos(current_player_idx)
+            round_over          = self._game_data.is_round_over()
 
     def _open_for_betting(self, preflop=False):
+        """
+        Display the current pot
+        """
+        self._ui.display_pot(self._game_data.get_pot())
+
         """
         Start a betting round if more than one player is able to bet
         """
@@ -617,7 +666,7 @@ class Game:
         else:
 
             if preflop is False:
-                self._ui.show_board(self._board, board_idx=self._board_idx)
+                self._ui.display_board(self._board, board_idx=self._board_idx)
 
             self._ui.display_no_bet_from_all_in()
 

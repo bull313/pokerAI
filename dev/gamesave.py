@@ -94,6 +94,12 @@ class GameSave:
     """
     Public Methods
     """
+    def clear_hand_history(self):
+        """
+        Remove all saved hands from the hand list
+        """
+        self._save_hands.clear()
+
     def save(self):
         """
         Check if the save happens without errors

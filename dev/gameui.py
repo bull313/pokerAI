@@ -20,6 +20,13 @@ class GameUI:
     """
 
     """
+    Boolean String Constants
+    """
+    BOOL_YES            = 'y'
+    BOOL_NO             = 'n'
+    BOOL_INSTRUCTION    = "%s/%s" % (BOOL_YES, BOOL_NO)
+
+    """
     Clear Screen Constants
     """
     CLEAR_COMMAND_OTHER         = "clear"
@@ -49,8 +56,8 @@ class GameUI:
     DISPLAY_GAME_SAVE_FAILURE       = "There was a problem saving the game"
 
     ### Save Game History Prompt ###
-    INPUT_ENDGAME_SAVE_STR              = "Would you like to save the finished game to keep the history (y/n)?"
-    INPUT_ENDGAME_SAVE_INVALID_RESPONSE = "Please enter %s for yes or %s for no to respond"
+    INPUT_ENDGAME_SAVE_STR              = "Would you like to save the finished game to keep the history (%s)?" % BOOL_INSTRUCTION
+    INPUT_ENDGAME_SAVE_INVALID_RESPONSE = "Please enter %s for yes or %s for no to respond" % (BOOL_YES, BOOL_NO)
     INPUT_ENDGAME_SAVE_CONFIRM          = "Game history successfully saved to %s%s!"
     INPUT_ENDGAME_SAVE_DENY             = "Game history was not saved"
     INPUT_ENDGAME_SAVE_PROBLEM          = "There was a problem saving the game history"
@@ -59,12 +66,12 @@ class GameUI:
     Game Loading Strings
     """
     ### Game Load Prompts ###
-    INPUT_LOAD_GAME_STR                         = "A game with this name has been found! Would you like to continue playing this game (y/n)?"
-    INPUT_LOAD_GAME_INVALID_RESPONSE            = "Please enter %s for yes or %s for no to respond"
+    INPUT_LOAD_GAME_STR                         = "A game with this name has been found! Would you like to continue playing this game (%s)?" % BOOL_INSTRUCTION
+    INPUT_LOAD_GAME_INVALID_RESPONSE            = "Please enter %s for yes or %s for no to respond" % (BOOL_YES, BOOL_NO)
 
     ### Completed Game History Load Prompts ###
-    INPUT_LOAD_GAME_HISTORY_STR                 = "A game made with this name has been found! This game is already finished. Would you like to view the game history (y/n)?"
-    INPUT_LOAD_GAME_HISTORY_INVALID_RESPONSE    = "Please enter %s for yes or %s for no to respond"
+    INPUT_LOAD_GAME_HISTORY_STR                 = "A game made with this name has been found! This game is already finished. Would you like to view the game history (%s)?" % BOOL_INSTRUCTION
+    INPUT_LOAD_GAME_HISTORY_INVALID_RESPONSE    = "Please enter %s for yes or %s for no to respond" % (BOOL_YES, BOOL_NO)
 
     ### Load Game Confirmation Message ###
     DISPLAY_GAME_SAVE_OVERWRITE_WARNING         = "WARNING: If you continue and save this new game, you will overwrite the existing game in this file.\nIf you would like to keep the save in this file, quit and restart this program with a different save name"
@@ -73,6 +80,11 @@ class GameUI:
     """
     Set Up New Game Strings
     """
+    ### Number of Players ###
+    INPUT_NUM_PLAYERS_STR                           = "Enter the number of players in the game: "
+    INPUT_NUM_PLAYERS_OUT_OF_RANGE_ERROR            = "Number of players cannot be less than %d or more than %d!"
+    INPUT_NUM_PLAYERS_INTEGER_ERROR                 = "Number of players must be a valid integer"
+
     ### Starting Chip Count ###
     INPUT_STARTING_CHIP_COUNT_STR                   = "Enter the starting chip count: "
     INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR     = "Starting chip count must be a positive number"
@@ -96,6 +108,7 @@ class GameUI:
     """
     DISPLAY_TIME_EXPIRED                            = "\r\rTime is up! Increasing the blinds next round"
     DISPLAY_TIMER_SET                               = "Round %d! Big blind set to %d and timer has been reset to %s\n"
+    DISPLAY_TIMER_SET_PAST                          = "Round %d: Big blind was at %d and timer was at %s\n"
     DISPLAY_TIMER_CURRENT_VALUE                     = "Time remaning in round %d is %s"
     DISPLAY_TIMER_BLINDS_MAXED_OUT                  = "Big blind is at the maximum of %d and will not be raised any higher\n"
 
@@ -104,14 +117,18 @@ class GameUI:
     """
     DISPLAY_PLAYER_DATA_CHIP_COUNT          = "%s has %d chips\n"
     DISPLAY_PLAYER_DATA_IS_DEALER           = "%s is the dealer\n"
+    DISPLAY_PLAYER_DATA_IS_SMALL_BLIND      = "%s is the small blind\n"
+    DISPLAY_PLAYER_DATA_IS_BIG_BLIND        = "%s is the big blind\n"
     DISPLAY_PLAYER_DATA_CHIPS_IN_ACTION     = "Player has %d chips in action\n"
-    DISPLAY_PLAYER_DATA_IS_NOT_DEALER       = "%s is not the dealer\n"
+    DISPLAY_PLAYER_DATA_NO_SPECIAL_POS      = "%s is not the dealer or in the blinds\n"
     DISPLAY_PLAYER_DATA_PLAYER_HAND_CARDS   = "%s has %s\n"
     
     """
     Pot Strings
     """
-    DISPLAY_POT_SIZE = "The pot is currently at %d"
+    ### Pot Values ###
+    DISPLAY_POT_MAIN_SIZE       = "The main pot is currently at %d"
+    DISPLAY_POT_SIDE_SIZE       = "Side pot #%d is currently at %d"
     
     """
     Player Move Strings
@@ -139,18 +156,28 @@ class GameUI:
     """
     All-in Player Strings
     """
-    DISPLAY_ALL_IN                  = "A player is all in. No betting round can take place"
+    DISPLAY_ALL_IN = "No betting round can take place because there are not enough players left who can bet"
 
     """
     Post-Hand Strings
     """
     ### Showdown ###
-    DISPLAY_HAND_WINNER         = "%s wins with %s!"
-    DISPLAY_HAND_SPLIT_WINNER   = "%s has tied and takes a piece of the pot with %s!"
-    DISPLAY_HAND_PLAYER_RANK    = "%s had %s"
+    DISPLAY_HAND_POT_MAIN_NAME              = "Main Pot:\n"
+    DISPLAY_HAND_POT_SIDE_NAME              = "Side Pot #%d:\n"
+    DISPLAY_HAND_WINNER                     = "%s wins with %s!"
+    DISPLAY_HAND_SPLIT_WINNER               = "%s has tied and takes a piece of the pot with %s!"
+    DISPLAY_HAND_PLAYER_RANK                = "%s had %s"
 
-    ### Pot Folded to Winner ###
-    DISPLAY_FOLDED_POT_WINNER   = "%s wins the pot with %s as the only player remaining"
+    ### Pot Folded to Winner ###      
+    DISPLAY_HAND_FOLDED_POT_WINNER          = "%s wins the pot with %s as the only player remaining"
+    DISPLAY_HAND_FOLDED_MASKED_HAND         = "XX"
+
+    ### Eliminated player ###
+    DISPLAY_HAND_PLAYER_ELIMINATED          = "%s has busted out and finished in %d%s place"
+    DISPLAY_HAND_ORDINAL_RANK_FIRST_SUFFIX  = "st"
+    DISPLAY_HAND_ORDINAL_RANK_SECOND_SUFFIX = "nd"
+    DISPLAY_HAND_ORDINAL_RANK_THIRD_SUFFIX  = "rd"
+    DISPLAY_HAND_ORDINAL_RANK_OTHER_SUFFIX  = "th"
 
     """
     Game Winner Strings
@@ -162,9 +189,10 @@ class GameUI:
     Game History Playback Strings
     """
     ### Playback Game Setup ###
-    DISPLAY_STARTING_CHIP_COUNT         = "Each player begins with %d chips"
-    DISPLAY_STARTING_BIG_BLIND          = "Starting big blind is %d"
-    DISPLAY_BIG_BLIND_INCREASE_INTERVAL = "Blinds increase every %d minutes"
+    DISPLAY_PLAYBACK_STARTING_NUM_PLAYERS        = "Game begun with %d players"
+    DISPLAY_PLAYBACK_STARTING_CHIP_COUNT         = "Each player begins with %d chips"
+    DISPLAY_PLAYBACK_STARTING_BIG_BLIND          = "Starting big blind is %d"
+    DISPLAY_PLAYBACK_BIG_BLIND_INCREASE_INTERVAL = "Blinds increase every %d minute(s)"
     
     ### Playback Hand ###
     DISPLAY_HAND_ACTIONS_HEADER = "Hand Actions:"
@@ -194,12 +222,6 @@ class GameUI:
     NEWLINE = '\n'
     SPACE   = ' '
     TAB     = '\t'
-
-    """
-    Boolean String Constants
-    """
-    BOOL_YES    = 'y'
-    BOOL_NO     = 'n'
 
     """
     Constructor
@@ -393,7 +415,7 @@ class GameUI:
         Create Constraints -> Error Message Map
         """
         cond_func_str_map = {
-            lambda val: self._is_valid_bool_str(val)  :   GameUI.INPUT_ENDGAME_SAVE_INVALID_RESPONSE % ( GameUI.BOOL_YES, GameUI.BOOL_NO )
+            lambda val: self._is_valid_bool_str(val)  :   GameUI.INPUT_ENDGAME_SAVE_INVALID_RESPONSE
         }
 
         """
@@ -428,7 +450,7 @@ class GameUI:
         Create Constraints -> Error Message Map
         """
         cond_func_str_map = {
-            lambda val: self._is_valid_bool_str(val)  :   GameUI.INPUT_LOAD_GAME_INVALID_RESPONSE % ( GameUI.BOOL_YES, GameUI.BOOL_NO )
+            lambda val: self._is_valid_bool_str(val)  :   GameUI. INPUT_LOAD_GAME_INVALID_RESPONSE
         }
 
         """
@@ -454,7 +476,7 @@ class GameUI:
         Create Constraints -> Error Message Map
         """
         cond_func_str_map = {
-            lambda val: self._is_valid_bool_str(val) :   GameUI.INPUT_LOAD_GAME_HISTORY_INVALID_RESPONSE % ( GameUI.BOOL_YES, GameUI.BOOL_NO )
+            lambda val: self._is_valid_bool_str(val) :   GameUI.INPUT_LOAD_GAME_HISTORY_INVALID_RESPONSE
         }
 
         """
@@ -467,6 +489,9 @@ class GameUI:
         """
         result = self._eval_bool_str(result)
 
+        """
+        Return Result
+        """
         return result
 
     def display_load_game_history_cancellation(self):
@@ -478,6 +503,24 @@ class GameUI:
     """
     Set Up New Game Methods
     """
+    def get_num_players(self, min_amt, max_amt):
+        """
+        Create Constraints -> Error Message Map
+        """
+        cond_func_str_map = {
+            lambda val: int(val) >= min_amt and int(val) <= max_amt : GameUI.INPUT_NUM_PLAYERS_OUT_OF_RANGE_ERROR % (min_amt, max_amt)
+        }
+
+        """
+        Prompt user for a valid value
+        """
+        result, = self._prompt_value(GameUI.INPUT_NUM_PLAYERS_STR, cond_func_str_map, except_str=GameUI.INPUT_NUM_PLAYERS_INTEGER_ERROR, clear_screen=False)
+
+        """
+        Return Result
+        """
+        return int( result )
+
     def get_starting_chip_count(self):
         """
         Create Constraints -> Error Message Map
@@ -491,6 +534,10 @@ class GameUI:
         Prompt user for a valid value
         """
         result, = self._prompt_value(GameUI.INPUT_STARTING_CHIP_COUNT_STR, cond_func_str_map, except_str=GameUI.INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR, clear_screen=False)
+
+        """
+        Return Result
+        """
         return int( result )
 
     def get_starting_big_blind(self, starting_chip_count):
@@ -521,6 +568,10 @@ class GameUI:
         Prompt user for a valid value
         """
         result, = self._prompt_value(GameUI.INPUT_BIG_BLIND_INTERVAL_STR, cond_func_str_map, except_str=GameUI.INPUT_BIG_BLIND_INTERVAL_FLOAT_ERROR, clear_screen=False)
+
+        """
+        Return Result
+        """
         return float( result )
 
     """
@@ -529,9 +580,14 @@ class GameUI:
     def display_time_expired(self):
         print(GameUI.DISPLAY_TIME_EXPIRED)
 
-    def display_timer_set(self, round_num, blind_amt, time_amt):
+    def display_timer_set(self, round_num, blind_amt, time_amt, past=False):
+        """
+        Display the round number, current big blind, and timer value
+        Use past tense if specified
+        """
         time_str = GameTimer.minutes_to_str(time_amt)
-        print(GameUI.DISPLAY_TIMER_SET % (round_num, blind_amt, time_str))
+        time_msg = GameUI.DISPLAY_TIMER_SET if not past else GameUI.DISPLAY_TIMER_SET_PAST
+        print(time_msg % (round_num, blind_amt, time_str))
 
     def display_current_timer_value(self, round_num, timer_value):
         timer_str = GameTimer.minutes_to_str(timer_value)
@@ -543,27 +599,47 @@ class GameUI:
     """
     Player Data Methods
     """
-    def display_player_data(self, players):
+    def display_player_data(self, players, notable_positions):
         """
         Local Variables
         """
-        player_str = ""
-        dealer_player = True
+        player_str          = ""
+        position_name_dict  = None
 
-        for player in players:
+        """
+        Tag the notable positions with their special label strings
+        """
+        if len(notable_positions) == 2:
+            dealer, big_blind = notable_positions
+
+            position_name_dict = {
+                dealer      : GameUI.DISPLAY_PLAYER_DATA_IS_DEALER,
+                big_blind   : GameUI.DISPLAY_PLAYER_DATA_IS_BIG_BLIND
+            }
+
+        else:
+            dealer, small_blind, big_blind = notable_positions
+
+            position_name_dict = {
+            dealer      : GameUI.DISPLAY_PLAYER_DATA_IS_DEALER,
+            small_blind : GameUI.DISPLAY_PLAYER_DATA_IS_SMALL_BLIND,
+            big_blind   : GameUI.DISPLAY_PLAYER_DATA_IS_BIG_BLIND
+        }
+
+        for i in range(len(players)):
             """
             Display the player's chip count
             """
-            player_str += GameUI.DISPLAY_PLAYER_DATA_CHIP_COUNT % (player, player.get_stack_size())
+            player       = players[i]
+            player_str  += GameUI.DISPLAY_PLAYER_DATA_CHIP_COUNT % (player, player.get_stack_size())
 
             """
-            Display whether or not the player is the current dealer
+            Display whether or not the player is in a notable position (dealer, small blind, big blind)
             """
-            if dealer_player:
-                player_str += GameUI.DISPLAY_PLAYER_DATA_IS_DEALER % player
-                dealer_player = False
+            if position_name_dict is not None and i in position_name_dict.keys():
+                player_str += position_name_dict[i] % player
             else:
-                player_str += GameUI.DISPLAY_PLAYER_DATA_IS_NOT_DEALER % player
+                player_str += GameUI.DISPLAY_PLAYER_DATA_NO_SPECIAL_POS % player
 
             """
             Disaplay the player's chips currently in action
@@ -585,7 +661,21 @@ class GameUI:
     Pot Methods
     """
     def display_pot(self, pot):
-        print(GameUI.DISPLAY_POT_SIZE % pot)
+        """
+        Display the main pot
+        Then display any and all side pots
+        """
+        for i in range(len(pot)):
+            """
+            Display Main Pot
+            """
+            if i == 0:
+                print(GameUI.DISPLAY_POT_MAIN_SIZE % pot[i])
+            else:
+                """
+                Display Side Pots
+                """
+                print( GameUI.DISPLAY_POT_SIDE_SIZE % ( i, pot[i] ) )
 
     """
     Player Move Methods
@@ -639,7 +729,7 @@ class GameUI:
             chosen_amount = int(chosen_amount)
 
         """
-        Return result
+        Return Result
         """
         return (chosen_move, chosen_amount)
 
@@ -676,11 +766,37 @@ class GameUI:
     """
     Post-Hand Methods
     """
-    def show_results(self, player_hand_triples, num_winners):
+    def display_showdown_results(self, player_hand_triples, num_winners, pot_idx=None):
+        """
+        Local Variables
+        """
+        loser_message       = ""
+        message_prefix      = ""
+        pot_idx_included    = pot_idx is not None
+        winner_message      = ""
+
+        if pot_idx_included:
+            """
+            Label showdown results with the name of the specified pot
+            """
+            if pot_idx == 0:
+                winner_message = GameUI.DISPLAY_HAND_POT_MAIN_NAME
+            else:
+                winner_message = GameUI.DISPLAY_HAND_POT_SIDE_NAME % pot_idx
+        
+            """
+            Add a tab to all result messages if the pot was labeled
+            """
+            message_prefix = GameUI.TAB
+
+
         """
         Determine singular or split winner message based on the number of hand winners
         """
-        winner_message = GameUI.DISPLAY_HAND_WINNER if num_winners == 1 else GameUI.DISPLAY_HAND_SPLIT_WINNER
+        loser_message  += message_prefix
+        loser_message  += GameUI.DISPLAY_HAND_PLAYER_RANK
+        winner_message += message_prefix
+        winner_message += GameUI.DISPLAY_HAND_WINNER if num_winners == 1 else GameUI.DISPLAY_HAND_SPLIT_WINNER        
 
         for i in range(len(player_hand_triples)):
             """
@@ -696,11 +812,77 @@ class GameUI:
             if i < num_winners:
                 print(winner_message % (player, hand))
             else:
-                print(GameUI.DISPLAY_HAND_PLAYER_RANK % (player, hand))
+                print(loser_message  % (player, hand))
+        
+        """
+        Provide one extra newline
+        """
+        print()
 
-    def show_folded_round(self, player):
-        cards_str = self._get_hole_cards_as_str(player)
-        print(GameUI.DISPLAY_FOLDED_POT_WINNER % (player, cards_str))
+    def display_folded_round(self, player, show_hand, pot_idx=None):
+        """
+        Display giving pot to only player remaining in the hand (due to fold)
+        Local Variables
+        """
+        cards_str       = GameUI.DISPLAY_HAND_FOLDED_MASKED_HAND
+        optional_tab    = GameUI.TAB if pot_idx is not None else ""
+        pot_str         = ""
+
+        """
+        Get card string if showing hand
+        """
+        if show_hand:
+            cards_str = self._get_hole_cards_as_str(player)
+
+        """
+        Label the pot if there is a side pot
+        """
+        if pot_idx is None:
+            pot_str += GameUI.DISPLAY_HAND_FOLDED_POT_WINNER % (player, cards_str)
+        else:
+            pot_str += GameUI.DISPLAY_HAND_POT_MAIN_NAME if pot_idx == 0 else GameUI.DISPLAY_HAND_POT_SIDE_NAME % pot_idx
+        
+        """
+        Show the winning hand player with the holding (force show)
+        """
+        pot_str += optional_tab
+        pot_str += GameUI.DISPLAY_HAND_FOLDED_POT_WINNER % (player, cards_str)
+
+        """
+        Add extra newline
+        """
+        pot_str += GameUI.NEWLINE
+        
+        """
+        Print result
+        """
+        print(pot_str)
+
+    def display_player_eliminated(self, player, rank):
+        """
+        Assume the default ordinal suffix
+        """
+        rank_suffix = GameUI.DISPLAY_HAND_ORDINAL_RANK_OTHER_SUFFIX
+
+        """
+        Define which ordinal numbers get which special suffix
+        """
+        special_suffices = {
+            1 : GameUI.DISPLAY_HAND_ORDINAL_RANK_FIRST_SUFFIX,
+            2 : GameUI.DISPLAY_HAND_ORDINAL_RANK_SECOND_SUFFIX,
+            3 : GameUI.DISPLAY_HAND_ORDINAL_RANK_THIRD_SUFFIX
+        }
+
+        """
+        Check if the rank needs a special suffix (ends in one of the special numbers and isn't in the teens)
+        """
+        if rank % 10 in special_suffices.keys() and int(rank / 10) != 1:
+            rank_suffix = special_suffices[ rank % 10 ]
+
+        """
+        Print player eliminated with final ranking
+        """
+        print(GameUI.DISPLAY_HAND_PLAYER_ELIMINATED % (player, rank, rank_suffix))
 
     """
     Game Winner Methods
@@ -712,15 +894,16 @@ class GameUI:
     """
     Game History Playback Methods
     """
-    def display_game_setup(self, starting_chip_count, starting_big_blind, big_blind_increase_interval):
+    def display_game_setup(self, starting_num_players, starting_chip_count, starting_big_blind, big_blind_increase_interval):
         """
         Show the completed game's setup data
         """
-        print(GameUI.DISPLAY_STARTING_CHIP_COUNT            % starting_chip_count)
-        print(GameUI.DISPLAY_STARTING_BIG_BLIND             % starting_big_blind)
-        print(GameUI.DISPLAY_BIG_BLIND_INCREASE_INTERVAL    % big_blind_increase_interval)
+        print(GameUI.DISPLAY_PLAYBACK_STARTING_NUM_PLAYERS           % starting_num_players         )
+        print(GameUI.DISPLAY_PLAYBACK_STARTING_CHIP_COUNT            % starting_chip_count          )
+        print(GameUI.DISPLAY_PLAYBACK_STARTING_BIG_BLIND             % starting_big_blind           )
+        print(GameUI.DISPLAY_PLAYBACK_BIG_BLIND_INCREASE_INTERVAL    % big_blind_increase_interval  )
 
-    def show_actions(self, actions):
+    def display_actions(self, actions):
         """
         Display all given hand actions
         """
@@ -770,7 +953,7 @@ class GameUI:
     """
     Game Board Methods
     """
-    def show_board(self, board_cards, board_idx=None):
+    def display_board(self, board_cards, board_idx=None):
         """
         Show the proper board round name
         """
