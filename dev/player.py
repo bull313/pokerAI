@@ -68,12 +68,18 @@ class Player:
 
         return num_to_bet
 
-    def release_action(self):
+    def release_action(self, amount=None):
         """
-        Store the action in a buffer variable and clear the action property
+        Get the number of chips to release from action
+        If the amount is specified, cap it at player's total action
+        Default to player's total action
         """
-        action_released = self._action
-        self._action    = 0
+        action_released = amount if amount is not None and amount <= self._action else self._action
+
+        """
+        Update remaining action
+        """    
+        self._action -= action_released
 
         """
         Return Result
