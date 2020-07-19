@@ -47,11 +47,17 @@ class GameTheater:
             self._ui.display_round_border()
             
             """
-            Gather all data from the hand and determine the current big blind size
+            Gather all data from the hand
             """
             round_number, init_player_state, timestamp_init, actions, cards, _, _   = hand
-            current_big_blind                                                       = self._setup.starting_big_blind * round_number
-            # TODO: put blind increase schedule as a lambda function in game setup
+            starting_big_blind                                                      = self._setup.starting_big_blind
+            current_big_blind                                                       = starting_big_blind
+
+            """
+            Determine the current big blind size
+            """
+            for _ in range(1, round_number):
+                current_big_blind = self._setup.blind_increase_scheme(current_big_blind, starting_big_blind)
 
             """
             Display all hand data

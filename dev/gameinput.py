@@ -15,8 +15,9 @@ class GameInput:
     """
     Constants
     """
-    HOT_KEY_DEBUG       = False
-    OS_WINDOWS_NAME     = "nt"
+    HOT_KEY_DEBUG               = False
+    OS_WINDOWS_NAME             = "nt"
+    DEBUG_HOT_KEY_PRESSED_MSG   = "Virtual Key Code Pressed: %s"
 
     """
     Hotkey Constants
@@ -122,7 +123,7 @@ class GameInput:
         If debug mode is on, display the virtual key code
         """
         if GameInput.HOT_KEY_DEBUG:
-            print("Virtual Key Code Pressed: %s" % vk)
+            print(GameInput.DEBUG_HOT_KEY_PRESSED_MSG % vk)
 
         self._pressed_keys.add(vk)
         self._check_for_hot_keys()

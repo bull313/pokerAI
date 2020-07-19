@@ -90,6 +90,7 @@ class GameUI:
     INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR     = "Starting chip count must be a positive number"
     INPUT_STARTING_CHIP_COUNT_EVEN_ERROR            = "Starting chip count must be an even number"
     INPUT_STARTING_CHIP_COUNT_INTEGER_ERROR         = "Starting chip count must be a valid integer"
+    INPUT_STARTING_CHIP_COUNT_TOO_SMALL_ERROR       = "Starting chip count must be at least %d"
 
     ### Starting Big Blind ###
     INPUT_STARTING_BIG_BLIND_STR                    = "Enter the starting big blind amount: "
@@ -109,7 +110,7 @@ class GameUI:
     DISPLAY_TIME_EXPIRED                            = "\r\rTime is up! Increasing the blinds next round"
     DISPLAY_TIMER_SET                               = "Round %d! Big blind set to %d and timer has been reset to %s\n"
     DISPLAY_TIMER_SET_PAST                          = "Round %d: Big blind was at %d and timer was at %s\n"
-    DISPLAY_TIMER_CURRENT_VALUE                     = "Time remaning in round %d is %s"
+    DISPLAY_TIMER_CURRENT_VALUE                     = "Time remaining in round %d is %s"
     DISPLAY_TIMER_BLINDS_MAXED_OUT                  = "Big blind is at the maximum of %d and will not be raised any higher\n"
 
     """
@@ -224,6 +225,11 @@ class GameUI:
     TAB     = '\t'
 
     """
+    Number of notable position constants
+    """
+    NUM_NOTABLE_POS_IN_HEADS_UP_GAME = 2
+
+    """
     Constructor
     """
     def __init__(self):
@@ -273,7 +279,7 @@ class GameUI:
         """
         Display the plyer's hole cards
         """
-        cards_str = ""
+        cards_str = str()
 
         """
         Get the hole cards and sort them by value
@@ -295,8 +301,8 @@ class GameUI:
         """
         Local Variables
         """
-        current_value = None
-        valid_value = False
+        current_value   = None
+        valid_value     = False
 
         while not valid_value:
 
@@ -311,6 +317,7 @@ class GameUI:
                 valid_value = True
 
                 for cond_func in cond_func_str_map:
+
                     if not cond_func(*current_value):
                         print( cond_func_str_map[cond_func] )
                         valid_value = False
@@ -382,6 +389,10 @@ class GameUI:
         for hotkey in self._input.get_installed_hotkey_strings():
             hotkey_name, description = hotkey
             print(GameUI.DISPLAY_HOT_KEY_COMMAND % (hotkey_name, description))
+
+        """
+        Add a new line for separation
+        """
         print()
 
     """
@@ -521,13 +532,14 @@ class GameUI:
         """
         return int( result )
 
-    def get_starting_chip_count(self):
+    def get_starting_chip_count(self, min_val):
         """
         Create Constraints -> Error Message Map
         """
         cond_func_str_map = {
-            lambda val: int(val) > 0        :   GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR,
-            lambda val: int(val) % 2 == 0   :   GameUI.INPUT_STARTING_CHIP_COUNT_EVEN_ERROR
+            lambda val: int(val) > 0            :   GameUI.INPUT_STARTING_CHIP_COUNT_NONPOSITIVE_ERROR,
+            lambda val: int(val) % 2 == 0       :   GameUI.INPUT_STARTING_CHIP_COUNT_EVEN_ERROR,
+            lambda val: int(val) >= min_val     : GameUI.INPUT_STARTING_CHIP_COUNT_TOO_SMALL_ERROR % min_val
         }
 
         """
@@ -603,13 +615,13 @@ class GameUI:
         """
         Local Variables
         """
-        player_str          = ""
+        player_str          = str()
         position_name_dict  = None
 
         """
         Tag the notable positions with their special label strings
         """
-        if len(notable_positions) == 2:
+        if len(notable_positions) == GameUI.NUM_NOTABLE_POS_IN_HEADS_UP_GAME:
             dealer, big_blind = notable_positions
 
             position_name_dict = {
@@ -665,17 +677,17 @@ class GameUI:
         Display the main pot
         Then display any and all side pots
         """
-        for i in range(len(pot)):
+        for pot_idx in range(len(pot)):
             """
             Display Main Pot
             """
-            if i == 0:
-                print(GameUI.DISPLAY_POT_MAIN_SIZE % pot[i])
+            if pot_idx == 0:
+                print(GameUI.DISPLAY_POT_MAIN_SIZE % pot[pot_idx])
             else:
                 """
                 Display Side Pots
                 """
-                print( GameUI.DISPLAY_POT_SIDE_SIZE % ( i, pot[i] ) )
+                print( GameUI.DISPLAY_POT_SIDE_SIZE % ( pot_idx, pot[pot_idx] ) )
 
     """
     Player Move Methods
@@ -706,6 +718,10 @@ class GameUI:
         print(GameUI.DISPLAY_PLAYER_MOVE_AVAILABLE_MOVES)
         for move in moves:
             print(GameUI.DISPLAY_PLAYER_MOVE_AVAILABLE_MOVE % GameMove.get_move_str(move, long_desc=True))
+
+        """
+        Add a new line for separation
+        """
         print()
 
         """
@@ -766,16 +782,15 @@ class GameUI:
     """
     Post-Hand Methods
     """
-    def display_showdown_results(self, player_hand_triples, num_winners, pot_idx=None):
+    def display_showdown_results(self, player_hand_triples, num_winners, pot_idx=0, display_multiple_pots=False):
         """
         Local Variables
         """
-        loser_message       = ""
-        message_prefix      = ""
-        pot_idx_included    = pot_idx is not None
-        winner_message      = ""
+        loser_message       = str()
+        message_prefix      = str()
+        winner_message      = str()
 
-        if pot_idx_included:
+        if display_multiple_pots:
             """
             Label showdown results with the name of the specified pot
             """
@@ -798,18 +813,18 @@ class GameUI:
         winner_message += message_prefix
         winner_message += GameUI.DISPLAY_HAND_WINNER if num_winners == 1 else GameUI.DISPLAY_HAND_SPLIT_WINNER        
 
-        for i in range(len(player_hand_triples)):
+        for hand_triple_idx in range(len(player_hand_triples)):
             """
             Get the player and hand from the hand triple
             """
-            _, player, hand = player_hand_triples[i]
+            _, player, hand = player_hand_triples[hand_triple_idx]
 
             """
             The triples are ordered from best hand to worst, so all players with an index
             smaller than the number of winners have won the hand
             All other players are displayed normally
             """
-            if i < num_winners:
+            if hand_triple_idx < num_winners:
                 print(winner_message % (player, hand))
             else:
                 print(loser_message  % (player, hand))
@@ -825,8 +840,8 @@ class GameUI:
         Local Variables
         """
         cards_str       = GameUI.DISPLAY_HAND_FOLDED_MASKED_HAND
-        optional_tab    = GameUI.TAB if pot_idx is not None else ""
-        pot_str         = ""
+        optional_tab    = GameUI.TAB if pot_idx is not None else str()
+        pot_str         = str()
 
         """
         Get card string if showing hand
@@ -867,7 +882,7 @@ class GameUI:
         """
         Define which ordinal numbers get which special suffix
         """
-        special_suffices = {
+        special_suffixes = {
             1 : GameUI.DISPLAY_HAND_ORDINAL_RANK_FIRST_SUFFIX,
             2 : GameUI.DISPLAY_HAND_ORDINAL_RANK_SECOND_SUFFIX,
             3 : GameUI.DISPLAY_HAND_ORDINAL_RANK_THIRD_SUFFIX
@@ -876,8 +891,12 @@ class GameUI:
         """
         Check if the rank needs a special suffix (ends in one of the special numbers and isn't in the teens)
         """
-        if rank % 10 in special_suffices.keys() and int(rank / 10) != 1:
-            rank_suffix = special_suffices[ rank % 10 ]
+        rank_suffix         = rank % 10
+        is_special_suffix   = lambda suffix: suffix in special_suffixes.keys()
+        not_in_teens        = lambda ordinal_num: int( ordinal_num / 10 ) != 1
+
+        if is_special_suffix(rank_suffix) and not_in_teens(rank):
+            rank_suffix = special_suffixes[ rank_suffix ]
 
         """
         Print player eliminated with final ranking
@@ -953,12 +972,12 @@ class GameUI:
     """
     Game Board Methods
     """
-    def display_board(self, board_cards, board_idx=None):
+    def display_board(self, board_cards, board_name_idx=None):
         """
         Show the proper board round name
         """
-        if board_idx is not None:
-            print(GameUI.GAME_BOARD_SUBTITLE % GameUI.GAME_BOARD_NAMES[ board_idx ])
+        if board_name_idx is not None:
+            print(GameUI.GAME_BOARD_SUBTITLE % GameUI.GAME_BOARD_NAMES[ board_name_idx ])
         else:
             print(GameUI.GAME_BOARD_TITLE)
 

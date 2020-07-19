@@ -34,22 +34,23 @@ class GameData:
         """
         Game setup properies
         """
-        self._game_setup                = None                  ### Holds setup data for the game
         self._big_blind_amt             = 0                     ### Current big blind size
+        self._game_setup                = None                  ### Holds setup data for the game
         self._game_timer                = None                  ### Game timer to track the interval of increasing the big blind
         self._players                   = None                  ### List of players in the game (to be initialized later)
 
         """
         Current hand properies
         """
+        self._aggressor_pos             = 0                     ### Position of the player with the highest bet on the table
+        self._board                     = list()                ### List of community cards
+        self._hand_players_played_move  = None                  ### Tracks if a player 
         self._pot                       = GameData.INITIAL_POT  ### List of sizes of all pots (main and side)
         self._pot_contenders            = list()                ### Corrsponding list containing all players contending for each pot
-        self._hand_players_played_move  = None                  ### Tracks if a player 
-        self._aggressor_pos             = 0                     ### Position of the player with the highest bet on the table
         self._prev_action_folded        = False                 ### Was the last action a fold?             
 
     """
-    Helper Methods
+    Private Methods
     """
     def _order_players(self, dealer_idx):
         """
@@ -149,6 +150,7 @@ class GameData:
         Remove folded players
         """
         for contender in self._pot_contenders[-1]:
+            
             if contender is not None:
                 remaining_players.append(contender)
 
@@ -188,6 +190,12 @@ class GameData:
         Get the number of pots (main + side pots)
         """
         return len(self._pot)
+
+    def get_board(self):
+        """
+        Get a copy of the community cards
+        """
+        return deepcopy(self._board)
 
     def get_next_player_pos(self, pos, only_in_hand=True):
         """
@@ -327,9 +335,9 @@ class GameData:
 
     def raise_blinds(self):
         """
-        Blind raising scheme is to add the starting big blind to the current big blind
+        Use the established blind raising scheme to raise the blinds
         """
-        self._big_blind_amt += self._game_setup.starting_big_blind
+        self._big_blind_amt = self._game_setup.blind_increase_scheme(self._big_blind_amt, self._game_setup.starting_big_blind)
 
     def blinds_maxed_out(self):
         """
@@ -352,11 +360,6 @@ class GameData:
             for player in self._players:
                 card = self._deck.draw_card()
                 player.take_hole_card(card)
-            
-        """
-        Return a copy of the players
-        """
-        return deepcopy(self._players)
 
     def make_blind_bets(self):
         """
@@ -494,7 +497,7 @@ class GameData:
         """
         return deepcopy(board_cards)
 
-    def evaluate_hands(self, pot_idx, board):
+    def evaluate_hands(self, pot_idx):
         player_hand_triple_list = list()
 
         """
@@ -511,7 +514,7 @@ class GameData:
 
             if player is not None:
                 hole_cards          = player.get_hole_cards()
-                hand_cards          = hole_cards + board
+                hand_cards          = hole_cards + self._board
                 hand_combinations   = combinations(hand_cards, Hand.HAND_SIZE)
                 optimal_hand        = max( [ Hand(hand_cards) for hand_cards in hand_combinations ] )
 
@@ -572,6 +575,12 @@ class GameData:
 
             for player_idx in player_pos_list:
                 self._pot_contenders[pot_idx][player_idx].collect_chips( self._pot[pot_idx] / split )
+    
+    def add_board_cards(self, board_cards):
+        """
+        Add cards to the game board
+        """
+        self._board += board_cards
 
     """
     Betting Round Methods
@@ -767,8 +776,14 @@ class GameData:
         """
         new_dealer_idx = self.get_next_player_pos(GameData.DEALER_IDX, only_in_hand=False)
         self._order_players(new_dealer_idx)
+    
+    def clear_board(self):
+        """
+        Clear the list of board cards
+        """
+        self._board.clear()
 
-    def reset_cards(self, board):
+    def reset_cards(self):
         """
         Remove hole cards from each player and reset/shuffle the deck
         """

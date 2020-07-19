@@ -41,6 +41,8 @@ class GameMove:
         FOLD    :   "Fold -> Forfeight the round"
     }
 
+    AMOUNT_STR = " #"
+
     """
     Static methods
     """
@@ -59,7 +61,7 @@ class GameMove:
         """
         if has_amt:
             amount = move_amount_split[1]
-            move += " #"
+            move += GameMove.AMOUNT_STR
 
         """
         Lookup the move in teh move dictionary
@@ -79,16 +81,16 @@ class GameMove:
         """
         Convert a move code to an output string
         """
-        move_cmd = ""
+        move_cmd    = str()
+        return_str  = str()
 
         """
         Iteratively search for the matching move name
         """
         for avail_move in GameMove.MOVE_INPUT_NAMES:
+            
             if move == GameMove.MOVE_INPUT_NAMES[avail_move]:
                 move_cmd = avail_move
-        
-        return_str = ""
 
         """
         Return the move name and description (long/short depending on parameter)

@@ -58,7 +58,7 @@ class Card:
         """
         Construct the suit as a string
         """
-        ret_val += Card.SUITS[ self._suit ][0].upper()
+        ret_val += Card.SUITS[self._suit][0].upper()
 
         """
         Return the result
