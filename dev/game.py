@@ -6,6 +6,7 @@ Game:
 """
 Imports
 """
+from gamecode       import GameCode
 from gamedata       import GameData
 from gamemove       import GameMove
 from gamesave       import GameSave
@@ -17,12 +18,7 @@ class Game:
     """
     Constants
     """
-    DEFAULT_BLIND_RAISING_SCHEME        = lambda old_blinds, initial_blinds: old_blinds + initial_blinds    ### Default mechanism to increase blinds: add the initial blind to the new blind
-    GAME_CODE_NEW_GAME                  = 0                                                                 ### Game is set to play a brand new game
-    GAME_CODE_PLAY_LOAD_GAME            = 1                                                                 ### Game is set to load and continue and existing game
-    GAME_CODE_CONTINUE_GAME             = 2                                                                 ### Game is ongoing
-    GAME_CODE_PLAYBACK_GAME             = 3                                                                 ### Game is set to play back a finished game
-    GAME_CODE_NO_PLAY                   = 4                                                                 ### Game is set not to play or play back any game
+    DEFAULT_BLIND_RAISING_SCHEME        = lambda old_blinds, initial_blinds: old_blinds + initial_blinds    ### Default mechanism to increase blinds: add the initial blind to the new blind                                                 
     MIN_STARTING_CHIP_COUNT             = 4                                                                 ### Absolute amount of starting chips per player
     NUM_CARDS_FOR_BOARD_TYPE            = [ 3, 1, 1 ]                                                       ### Number of cards to turn on each street
     NUM_HOLE_CARDS                      = 2                                                                 ### Number of hole cards per player
@@ -36,17 +32,17 @@ class Game:
     """
     def __init__(self):
         """
-        Game Properties
+        Properties
         """
-        self._blinds_maxed_out      = False         ### Are the blinds at the highest value?
-        self._board_name_idx             = 0        ### List address for the name of the board
-        self._game_data             = GameData()    ### Poker Data Interface Object
-        self._game_play_code        = False         ### What kind of game are we playing or playing back (new/load)?
-        self._game_save             = None          ### Object that manages saving a game finished or in progress
-        self._game_theater          = None          ### Plays back a finished game
-        self._hand_actions          = list()        ### List of actions that were made in a hand
-        self._ui                    = GameUI()      ### User Interface Object
-        self._num_remaining_players = 0             ### Number of remaining players in the game
+        self._blinds_maxed_out      = False             ### Are the blinds at the highest value?
+        self._board_name_idx        = 0                 ### List address for the name of the board
+        self._game_data             = GameData()        ### Poker Data Interface Object
+        self._game_play_code        = GameCode.NEW_GAME ### What kind of game are we playing or playing back (new/load)?
+        self._game_save             = None              ### Object that manages saving a game finished or in progress
+        self._game_theater          = None              ### Plays back a finished game
+        self._hand_actions          = list()            ### List of actions that were made in a hand
+        self._ui                    = GameUI()          ### User Interface Object
+        self._num_remaining_players = 0                 ### Number of remaining players in the game
 
     """
     Public methods
@@ -59,7 +55,7 @@ class Game:
         """
         game_save_name          = self._ui.get_game_save_name()
         self._game_save         = GameSave(game_save_name)
-        self._game_play_code    = Game.GAME_CODE_NEW_GAME
+        self._game_play_code    = GameCode.NEW_GAME
 
         """
         If the save name exists, set up a saved (loaded) game
@@ -78,13 +74,13 @@ class Game:
         """
         Play or play back a game
         """
-        if self._game_play_code == Game.GAME_CODE_PLAYBACK_GAME and self._game_theater is not None:
+        if self._game_play_code == GameCode.PLAYBACK_GAME and self._game_theater is not None:
             """
             Play back a game
             """
             self._game_theater.playback_game()
             
-        elif self._game_play_code != Game.GAME_CODE_NO_PLAY:
+        elif self._game_play_code != GameCode.NO_PLAY:
             """
             Play a game (new or loaded)
             """
@@ -122,7 +118,7 @@ class Game:
         """
         Initialize the round number if this is a new game
         """
-        if self._game_play_code == Game.GAME_CODE_NEW_GAME:
+        if self._game_play_code == GameCode.NEW_GAME:
             self._game_data.mark_next_round()
 
         """
@@ -140,7 +136,8 @@ class Game:
             self._ui.display_round_border()
             self._setup_hand()
             self._play_hand()
-            game_over, winner = self._cleanup_hand()
+            winner      = self._cleanup_hand()
+            game_over   = winner is not None
 
         """
         Game Finished: Display the winner and attempt to save the game's history for playback
@@ -277,12 +274,12 @@ class Game:
         """
         Set the game code to continue to prevent reloading of saved values
         """
-        self._game_play_code = Game.GAME_CODE_CONTINUE_GAME
+        self._game_play_code = GameCode.CONTINUE_GAME
 
         """
         Return game over status and winner if there is one
         """
-        return ( game_over, winner )
+        return winner
 
     def _setup_new_game(self):
         """
@@ -352,13 +349,13 @@ class Game:
                 Create a game theater and set the play protocol to playback
                 """
                 self._game_theater = GameTheater(game_setup, game_hands)
-                self._game_play_code = Game.GAME_CODE_PLAYBACK_GAME
+                self._game_play_code = GameCode.PLAYBACK_GAME
             else:
                 """
                 User cancellation: quit game
                 """
                 self._ui.display_load_game_history_cancellation()
-                self._game_play_code = Game.GAME_CODE_NO_PLAY
+                self._game_play_code = GameCode.NO_PLAY
             
         else:
             """
@@ -410,7 +407,7 @@ class Game:
                 game_setup.blind_increase_scheme    = Game.DEFAULT_BLIND_RAISING_SCHEME
 
                 self._game_data.setup_game_data(game_setup)
-                self._game_play_code = Game.GAME_CODE_PLAY_LOAD_GAME
+                self._game_play_code = GameCode.PLAY_LOAD_GAME
 
             else:
                 """
@@ -455,7 +452,7 @@ class Game:
         """
         If the game is in load mode, start the timer now
         """
-        if self._game_play_code == Game.GAME_CODE_PLAY_LOAD_GAME:
+        if self._game_play_code == GameCode.PLAY_LOAD_GAME:
             self._game_data.start_timer()
 
         """

@@ -31,9 +31,9 @@ class Player:
         """
         Private Properties
         """
-        self._action = 0            ### Money placed directly in front of the player ("bet" money)
-        self._hole_cards = list()   ### Received cards for a hand
-        self._stack = 0             ### Current chip count
+        self._action        = 0         ### Money placed directly in front of the player ("bet" money)
+        self._hole_cards    = list()    ### Received cards for a hand
+        self._stack         = 0         ### Current chip count
 
     """
     String Overrides
@@ -42,13 +42,25 @@ class Player:
         return "Player %d" % self.ID
 
     """
+    Getter Methods
+    """
+    def get_action(self):
+        return self._action
+
+    def get_hole_cards(self):
+        return deepcopy(self._hole_cards)
+
+    def get_stack_size(self):
+        return self._stack
+
+    """
     Hole Card Setters
     """
     def take_hole_card(self, card):
         self._hole_cards.append(card)
 
     def pass_hole_cards(self):
-        self._hole_cards = list()
+        self._hole_cards.clear()
 
     """
     Chip Stack and Action Setter Methods
@@ -91,15 +103,3 @@ class Player:
         Add the passed value into the stack
         """
         self._stack += num_received
-
-    """
-    Getter Methods
-    """
-    def get_action(self):
-        return self._action
-
-    def get_hole_cards(self):
-        return deepcopy(self._hole_cards)
-
-    def get_stack_size(self):
-        return self._stack

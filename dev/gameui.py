@@ -225,7 +225,7 @@ class GameUI:
     TAB     = '\t'
 
     """
-    Number of notable position constants
+    Number of "notable position" (dealer, small blind, big blind, etc.) constants
     """
     NUM_NOTABLE_POS_IN_HEADS_UP_GAME = 2
 
@@ -233,122 +233,10 @@ class GameUI:
     Constructor
     """
     def __init__(self):
+        """
+        Properties
+        """
         self._input = GameInput() ### User input manager object
-
-    """
-    Private methods
-    """
-    def _clear_screen(self):
-        """
-        Clear the command window/terminal using the proper clear command
-        """
-        if os_name == GameUI.CLEAR_COMMAND_WINDOWS_NAME:
-            os_system(GameUI.CLEAR_COMMAND_WINDOWS)
-        else:
-            os_system(GameUI.CLEAR_COMMAND_OTHER)
-
-    def _is_valid_bool_str(self, val):
-        """
-        Check if the given string is parseable as a boolean
-        """
-        return val.lower() in { GameUI.BOOL_YES, GameUI.BOOL_NO }
-
-    def _eval_bool_str(self, val):
-        """
-        Convert a yes/no string into a boolean
-
-        Ignore casing
-        """
-        res = None
-        val_lower = val.lower()
-
-        """
-        Check for valid boolean string values
-        """
-        if val_lower == GameUI.BOOL_YES:
-            res = True
-        elif val_lower == GameUI.BOOL_NO:
-            res = False
-        
-        """
-        Return Result
-        """
-        return res
-
-    def _get_hole_cards_as_str(self, player):
-        """
-        Display the plyer's hole cards
-        """
-        cards_str = str()
-
-        """
-        Get the hole cards and sort them by value
-        """
-        hole_cards = player.get_hole_cards()
-        hole_cards.sort(reverse=True)
-
-        """
-        Construct the card string
-        """
-        cards_str = GameUI.SPACE.join(map(str, hole_cards))
-
-        """
-        Return Result
-        """
-        return cards_str
-
-    def _prompt_value(self, prompt_str, cond_func_str_map, wrapper_function=lambda val: tuple([val]), except_str="", clear_screen=True):
-        """
-        Local Variables
-        """
-        current_value   = None
-        valid_value     = False
-
-        while not valid_value:
-
-            current_value = self._input.get_input(prompt_str)
-            current_value = wrapper_function(current_value)
-
-            """
-            Test every condition and if one fails output its corresponding string
-            """
-            try:
-
-                valid_value = True
-
-                for cond_func in cond_func_str_map:
-
-                    if not cond_func(*current_value):
-                        print( cond_func_str_map[cond_func] )
-                        valid_value = False
-                        break
-
-            except:
-                """
-                If an exception occurrs, print the exception string and try again
-                """
-                print(except_str)
-                valid_value = False
-
-        """
-        Clear the screen if specified
-        """
-        if clear_screen:
-            self._clear_screen()
-
-        """
-        Return Result
-        """
-        return current_value
-
-    def _setup_command(self, callback, hot_key):
-        """
-        Create a hot key combo - callback function pair
-        """
-        if hot_key is not None:
-            self._input.pair_hot_key_to_command(hot_key, callback)
-        else:
-            raise Exception(GameUI.DISPLAY_HOT_KEY_COMMAND_NOT_RECOGNIZED)
 
     """
     Public Methods
@@ -410,6 +298,10 @@ class GameUI:
         Prompt user for a valid value
         """
         result, = self._prompt_value(GameUI.INPUT_GAME_SAVE_NAME_STR, cond_func_str_map, clear_screen=False)
+
+        """
+        Return Result
+        """
         return result
 
     def display_game_save_confirm(self, save_successful, name):
@@ -566,6 +458,10 @@ class GameUI:
         Prompt user for a valid value
         """
         result, = self._prompt_value(GameUI.INPUT_STARTING_BIG_BLIND_STR, cond_func_str_map, except_str=GameUI.INPUT_STARTING_BIG_BLIND_INTEGER_ERROR, clear_screen=False)
+
+        """
+        Return Result
+        """
         return int( result )
 
     def get_blind_increase_interval(self):
@@ -804,7 +700,6 @@ class GameUI:
             """
             message_prefix = GameUI.TAB
 
-
         """
         Determine singular or split winner message based on the number of hand winners
         """
@@ -834,13 +729,13 @@ class GameUI:
         """
         print()
 
-    def display_folded_round(self, player, show_hand, pot_idx=None):
+    def display_folded_round(self, player, show_hand, pot_idx=-1):
         """
         Display giving pot to only player remaining in the hand (due to fold)
         Local Variables
         """
         cards_str       = GameUI.DISPLAY_HAND_FOLDED_MASKED_HAND
-        optional_tab    = GameUI.TAB if pot_idx is not None else str()
+        optional_tab    = GameUI.TAB if pot_idx != -1 else str()
         pot_str         = str()
 
         """
@@ -968,15 +863,14 @@ class GameUI:
         """
         print(border_str)
 
-
     """
     Game Board Methods
     """
-    def display_board(self, board_cards, board_name_idx=None):
+    def display_board(self, board_cards, board_name_idx=-1):
         """
         Show the proper board round name
         """
-        if board_name_idx is not None:
+        if board_name_idx > -1:
             print(GameUI.GAME_BOARD_SUBTITLE % GameUI.GAME_BOARD_NAMES[ board_name_idx ])
         else:
             print(GameUI.GAME_BOARD_TITLE)
@@ -990,3 +884,118 @@ class GameUI:
         Display the board cards
         """
         print(board_str)
+
+    """
+    Private methods
+    """
+    def _clear_screen(self):
+        """
+        Clear the command window/terminal using the proper clear command
+        """
+        if os_name == GameUI.CLEAR_COMMAND_WINDOWS_NAME:
+            os_system(GameUI.CLEAR_COMMAND_WINDOWS)
+        else:
+            os_system(GameUI.CLEAR_COMMAND_OTHER)
+
+    def _is_valid_bool_str(self, val):
+        """
+        Check if the given string is parseable as a boolean
+        """
+        return val.lower() in { GameUI.BOOL_YES, GameUI.BOOL_NO }
+
+    def _eval_bool_str(self, val):
+        """
+        Convert a yes/no string into a boolean
+
+        Ignore casing
+        """
+        res = None
+        val_lower = val.lower()
+
+        """
+        Check for valid boolean string values
+        """
+        if val_lower == GameUI.BOOL_YES:
+            res = True
+        elif val_lower == GameUI.BOOL_NO:
+            res = False
+        
+        """
+        Return Result
+        """
+        return res
+
+    def _get_hole_cards_as_str(self, player):
+        """
+        Display the plyer's hole cards
+        """
+        cards_str = str()
+
+        """
+        Get the hole cards and sort them by value
+        """
+        hole_cards = player.get_hole_cards()
+        hole_cards.sort(reverse=True)
+
+        """
+        Construct the card string
+        """
+        cards_str = GameUI.SPACE.join(map(str, hole_cards))
+
+        """
+        Return Result
+        """
+        return cards_str
+
+    def _prompt_value(self, prompt_str, cond_func_str_map, wrapper_function=lambda val: tuple([val]), except_str="", clear_screen=True):
+        """
+        Local Variables
+        """
+        current_value   = None
+        valid_value     = False
+
+        while not valid_value:
+
+            current_value = self._input.get_input(prompt_str)
+            current_value = wrapper_function(current_value)
+
+            """
+            Test every condition and if one fails output its corresponding string
+            """
+            try:
+
+                valid_value = True
+
+                for cond_func in cond_func_str_map:
+
+                    if not cond_func(*current_value):
+                        print( cond_func_str_map[cond_func] )
+                        valid_value = False
+                        break
+
+            except:
+                """
+                If an exception occurrs, print the exception string and try again
+                """
+                print(except_str)
+                valid_value = False
+
+        """
+        Clear the screen if specified
+        """
+        if clear_screen:
+            self._clear_screen()
+
+        """
+        Return Result
+        """
+        return current_value
+
+    def _setup_command(self, callback, hot_key):
+        """
+        Create a hot key combo - callback function pair
+        """
+        if hot_key is not None:
+            self._input.pair_hot_key_to_command(hot_key, callback)
+        else:
+            raise Exception(GameUI.DISPLAY_HOT_KEY_COMMAND_NOT_RECOGNIZED)

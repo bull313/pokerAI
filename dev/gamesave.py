@@ -35,13 +35,13 @@ class GameSave:
         """
         Save hand buffer objects
         """
-        self._round_number          = None      ### Round number in the game (used to track big blind increase)
-        self._player_state_init     = None      ### Buffer variable to hold all player data before a hand
-        self._timestamp_init        = None      ### Buffer variable to hold the blind timestamp before a hand
-        self._actions               = None      ### Buffer variable to hold all actions made in a hand
-        self._cards                 = None      ### Buffer variable to hold all cards dealt in a hand
-        self._player_state_final    = None      ### Buffer variable to hold all player data after a hand
-        self._timestamp_final       = None      ### Buffer variable to hold the blind timestamp after a hand
+        self._round_number          = 0         ### Round number in the game (used to track big blind increase)
+        self._player_state_init     = list()    ### Buffer variable to hold all player data before a hand
+        self._timestamp_init        = 0         ### Buffer variable to hold the blind timestamp before a hand
+        self._actions               = list()    ### Buffer variable to hold all actions made in a hand
+        self._cards                 = list()    ### Buffer variable to hold all cards dealt in a hand
+        self._player_state_final    = list()    ### Buffer variable to hold all player data after a hand
+        self._timestamp_final       = 0         ### Buffer variable to hold the blind timestamp after a hand
 
     """
     Getter Methods

@@ -11,11 +11,11 @@ class GameMove:
     """
     Constants
     """
-    CHECK = 0
-    BET = 1
-    RAISE = 2
-    CALL = 3
-    FOLD = 4
+    CHECK   = 0
+    BET     = 1
+    RAISE   = 2
+    CALL    = 3
+    FOLD    = 4
 
     MOVE_INPUT_NAMES = {
         "check"          : CHECK,

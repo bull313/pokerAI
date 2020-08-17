@@ -14,16 +14,16 @@ class Hand:
     """
     Constants
     """
-    TYPE_UNKNOWN = -1
-    TYPE_HIGH_CARD = 0
-    TYPE_PAIR = 1
-    TYPE_TWO_PAIR = 2
-    TYPE_THREE_OF_A_KIND = 3
-    TYPE_STRAIGHT = 4
-    TYPE_FLUSH = 5
-    TYPE_FULL_HOUSE = 6
-    TYPE_FOUR_OF_A_KIND = 7
-    TYPE_STRAIGHT_FLUSH = 8
+    TYPE_UNKNOWN            = -1
+    TYPE_HIGH_CARD          = 0
+    TYPE_PAIR               = 1
+    TYPE_TWO_PAIR           = 2
+    TYPE_THREE_OF_A_KIND    = 3
+    TYPE_STRAIGHT           = 4
+    TYPE_FLUSH              = 5
+    TYPE_FULL_HOUSE         = 6
+    TYPE_FOUR_OF_A_KIND     = 7
+    TYPE_STRAIGHT_FLUSH     = 8
 
     HAND_STRINGS = {
         TYPE_HIGH_CARD         : "%s high",
@@ -46,6 +46,9 @@ class Hand:
     Constructor
     """
     def __init__(self, cards):
+        """
+        Properties
+        """
         self._cards = cards
 
     """
@@ -134,19 +137,142 @@ class Hand:
         return ret_val
 
     """
+    Public Methods
+    """
+    def get_hand_ranking(self):
+        """
+        Evaluate the strength of the hand
+        
+        Local Variables
+        """
+        unique_values = set([ card.get_value() for card in self._cards])
+        num_unique_values = len(unique_values)
+        hand = None
+
+        if num_unique_values == Hand.HAND_SIZE:
+            """
+            All card values are unique: Hand must be Straight Flush, Straigh, Flush, or High Card
+
+            Test hand for Straight
+            """
+            straight = True
+
+            """
+            Sort values from highest to lowest
+            """
+            sorted_values = list(unique_values)
+            sorted_values.sort(reverse=True)
+            
+            """
+            Check if sorted values are consecutive
+            """
+            for i in range(1, len(sorted_values)):
+
+                if sorted_values[i - 1] - sorted_values[i] != 1:
+                    straight = False
+                    break
+
+            """
+            Check for exception: A, 2, 3, 4, 5
+            """
+            MIN_STRAIGHT = [ Card.ACE_HIGH_VALUE, 5, 4, 3, 2 ]
+
+            if straight == False and sorted_values == MIN_STRAIGHT:
+                sorted_values = MIN_STRAIGHT
+
+                """
+                In this case, Ace is treated as a low value
+                """
+                sorted_values.pop(0)
+                sorted_values.append(Card.ACE_LOW_VALUE)
+
+                straight = True
+
+            """
+            Test hand for Flush
+            """
+            flush = False
+
+            """
+            Hand is a flush if there is only one unique suit
+            """
+            num_unique_suits = len(set([ card.get_suit() for card in self._cards]))
+
+            if num_unique_suits == 1:
+                flush = True
+
+            """
+            Hand Evaluation:
+
+            -------------------------------------------
+            | Straight  | Flush     | Hand            |  
+            ------------------------------------------
+            | No        | No        | High Card       |
+            | No        | Yes       | Flush           |
+            | Yes       | No        | Straight        |
+            | Yes       | Yes       | Straight Flush  |
+            -------------------------------------------
+            """
+            if straight and flush:
+                hand = (Hand.TYPE_STRAIGHT_FLUSH, sorted_values)
+            elif straight:
+                hand = (Hand.TYPE_STRAIGHT, sorted_values)
+            elif flush:
+                hand = (Hand.TYPE_FLUSH, sorted_values)
+            else:
+                hand = (Hand.TYPE_HIGH_CARD, sorted_values)
+
+        elif num_unique_values == Hand.HAND_SIZE - 1:
+            """
+            Only 1 nonunique value: hand must be a pair
+
+            Local Variables
+            """
+            most_common = self._get_values_and_frequencies()
+            hand_values = self._get_ordered_hand_list(most_common)
+            hand = (Hand.TYPE_PAIR, hand_values)
+
+        elif num_unique_values == Hand.HAND_SIZE - 2:
+            """
+            Only 2 nonunique values: hand must either be a Two Pair or Three of a Kind
+            """
+            freq_to_type_table = {
+                2   : Hand.TYPE_TWO_PAIR,
+                3   : Hand.TYPE_THREE_OF_A_KIND
+            }
+
+            hand = self._evaluate_between_hands_by_max_freq(freq_to_type_table)
+
+        elif num_unique_values == Hand.HAND_SIZE - 3:
+            """
+            Only 3 nonunique values: hand must either be a Full House or Four of a Kind
+            """
+            freq_to_type_table = {
+                3   : Hand.TYPE_FULL_HOUSE,
+                4   : Hand.TYPE_FOUR_OF_A_KIND
+            }
+
+            hand = self._evaluate_between_hands_by_max_freq(freq_to_type_table)
+
+        else:
+            hand = (Hand.TYPE_UNKNOWN, [ card.get_value() for card in self._cards ])
+
+        return hand
+
+    """
     Private Methods
     """
     def _get_values_and_frequencies(self):
         """
         Get a list of each card value in the hand paired with its number of occurrences
         """
-        VALUE = 0
-        FREQUENCY = 1
+        VALUE       = 0
+        FREQUENCY   = 1
 
         """
         Get the list of raw values and build the pair list
         """
-        raw_values = [ card.get_value() for card in self._cards ]
+        raw_values  = [ card.get_value() for card in self._cards ]
         most_common = Counter(raw_values).most_common()
 
         """
@@ -224,126 +350,4 @@ class Hand:
         """
         Return Result
         """
-        return hand
-
-    """
-    Public Methods
-    """
-    def get_hand_ranking(self):
-        """
-        Evaluate the strength of the hand
-        
-        Local Variables
-        """
-        unique_values = set([ card.get_value() for card in self._cards])
-        num_unique_values = len(unique_values)
-        hand = None
-
-        if num_unique_values == Hand.HAND_SIZE:
-            """
-            All card values are unique: Hand must be Straight Flush, Straigh, Flush, or High Card
-
-            Test hand for Straight
-            """
-            straight = True
-
-            """
-            Sort values from highest to lowest
-            """
-            sorted_values = list(unique_values)
-            sorted_values.sort(reverse=True)
-            
-            """
-            Check if sorted values are consecutive
-            """
-            for i in range(1, len(sorted_values)): # Test consecutive
-                if sorted_values[i - 1] - sorted_values[i] != 1:
-                    straight = False
-                    break
-
-            """
-            Check for exception: A, 2, 3, 4, 5
-            """
-            MIN_STRAIGHT = [ Card.ACE_HIGH_VALUE, 5, 4, 3, 2 ]
-
-            if straight == False and sorted_values == MIN_STRAIGHT:
-                sorted_values = MIN_STRAIGHT
-
-                """
-                In this case, Ace is treated as a low value
-                """
-                sorted_values.pop(0)
-                sorted_values.append(Card.ACE_LOW_VALUE)
-
-                straight = True
-
-            """
-            Test hand for Flush
-            """
-            flush = False
-
-            """
-            Hand is a flush if there is only one unique suit
-            """
-            num_unique_suits = len(set([ card.get_suit() for card in self._cards]))
-
-            if num_unique_suits == 1:
-                flush = True
-
-            """
-            Hand Evaluation:
-
-            -------------------------------------------
-            | Straight  | Flush     | Hand            |  
-            ------------------------------------------
-            | No        | No        | High Card       |
-            | No        | Yes       | Flush           |
-            | Yes       | No        | Straight        |
-            | Yes       | Yes       | Straight Flush  |
-            -------------------------------------------
-            """
-            if straight and flush:
-                hand = (Hand.TYPE_STRAIGHT_FLUSH, sorted_values)
-            elif straight:
-                hand = (Hand.TYPE_STRAIGHT, sorted_values)
-            elif flush:
-                hand = (Hand.TYPE_FLUSH, sorted_values)
-            else:
-                hand = (Hand.TYPE_HIGH_CARD, sorted_values)
-
-        elif num_unique_values == Hand.HAND_SIZE - 1:
-            """
-            Only 1 nonunique value: hand must be a pair
-
-            Local Variables
-            """
-            most_common = self._get_values_and_frequencies()
-            hand_values = self._get_ordered_hand_list(most_common)
-            hand = (Hand.TYPE_PAIR, hand_values)
-
-        elif num_unique_values == Hand.HAND_SIZE - 2:
-            """
-            Only 2 nonunique values: hand must either be a Two Pair or Three of a Kind
-            """
-            freq_to_type_table = {
-                2: Hand.TYPE_TWO_PAIR,
-                3 : Hand.TYPE_THREE_OF_A_KIND
-            }
-
-            hand = self._evaluate_between_hands_by_max_freq(freq_to_type_table)
-
-        elif num_unique_values == Hand.HAND_SIZE - 3:
-            """
-            Only 3 nonunique values: hand must either be a Full House or Four of a Kind
-            """
-            freq_to_type_table = {
-                3: Hand.TYPE_FULL_HOUSE,
-                4 : Hand.TYPE_FOUR_OF_A_KIND
-            }
-
-            hand = self._evaluate_between_hands_by_max_freq(freq_to_type_table)
-
-        else:
-            hand = (Hand.TYPE_UNKNOWN, [ card.get_value() for card in self._cards ])
-
         return hand

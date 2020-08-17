@@ -15,31 +15,44 @@ class Deck:
     Constructor
     """
     def __init__(self):
+        """
+        Properties
+        """
+        self._cards = list()    ### Collection of card objects
+
         self.reset()
 
     """
-    Create a card for each suit and each value and add them to the list (deck)
+    Public Methods
     """
     def reset(self):
-        self._cards = list()
+        """
+        Create a card for each suit and each value and add them to the list (deck)
+        """
+        self._cards.clear()
 
-        for suit in range(len(Card.SUITS)):
+        for suit in range(len(Card.SUIT_NAMES)):
 
             for value in Card.VALUES:
                 self._cards.append( Card(suit, value) )
 
-    """
-    Randomize the order of the cards
-    """
     def shuffle(self):
+        """
+        Randomize the order of the cards
+        """
         shuffle(self._cards)
 
-    """
-    Remove a card from the deck and return it
-    """
     def draw_card(self):
-        if len(self._cards) == 0:
-            return None
+        """
+        Remove a card from the deck and return it
+        Return None if there are no available cards
+        """
+        card = None
 
-        card = self._cards.pop(0)
+        if len(self._cards) > 0:
+            card = self._cards.pop(0)
+
+        """
+        Return Result
+        """
         return card

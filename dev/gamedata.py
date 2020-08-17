@@ -32,9 +32,12 @@ class GameData:
     """
     def __init__(self):
         """
+        Properties
+
         Game setup properies
         """
         self._big_blind_amt             = 0                     ### Current big blind size
+        self._deck                      = None                  ### Deck of cards for the game
         self._game_setup                = None                  ### Holds setup data for the game
         self._game_timer                = None                  ### Game timer to track the interval of increasing the big blind
         self._players                   = None                  ### List of players in the game (to be initialized later)
@@ -44,19 +47,10 @@ class GameData:
         """
         self._aggressor_pos             = 0                     ### Position of the player with the highest bet on the table
         self._board                     = list()                ### List of community cards
-        self._hand_players_played_move  = None                  ### Tracks if a player 
+        self._hand_players_played_move  = None                  ### Tracks if a player has made a move in the current betting round
         self._pot                       = GameData.INITIAL_POT  ### List of sizes of all pots (main and side)
         self._pot_contenders            = list()                ### Corrsponding list containing all players contending for each pot
-        self._prev_action_folded        = False                 ### Was the last action a fold?             
-
-    """
-    Private Methods
-    """
-    def _order_players(self, dealer_idx):
-        """
-        Rotate/Cut the list of players so that the player at the dealer index is first on the list
-        """
-        self._players = self._players[dealer_idx:] + self._players[:dealer_idx]
+        self._prev_action_folded        = False                 ### Was the last action a fold?
 
     """
     Getter Methods
@@ -119,11 +113,11 @@ class GameData:
         """
         return deepcopy(self._players)
 
-    def get_hand_player(self, pot_idx=-1, player_idx=None):
+    def get_hand_player(self, pot_idx=-1, player_idx=-1):
         """
         Get a copy of a player at a specificed index
         """
-        player = deepcopy(self._pot_contenders[pot_idx][player_idx]) if player_idx is not None else None
+        player = deepcopy(self._pot_contenders[pot_idx][player_idx]) if player_idx != -1 else None
 
         if player is None:
             """
@@ -283,12 +277,12 @@ class GameData:
         self.setup_players(loaded_players=self._game_setup.init_player_state)
         self.setup_cards()
 
-    def setup_players(self, loaded_players=None):
+    def setup_players(self, loaded_players=list()):
         """
         Create each player and give each player a starting stack
         """
 
-        if loaded_players is None:
+        if len(loaded_players) == 0:
 
             self._players = [ Player() for _ in range(self._game_setup.starting_num_players) ]
 
@@ -452,32 +446,6 @@ class GameData:
         """
         self._aggressor_pos = None
 
-    def _create_side_pot(self):
-        """
-        Create a side pot that is initially empty
-        """
-        self._pot.append(0)
-
-        """
-        Add a list of all players contending for this side pot (any players who still have chips)
-        """
-        new_pot_contenders = list()
-
-        for player in self._pot_contenders[-1]:
-
-            if player is None or ( player.get_stack_size() + player.get_action() ) > 0:
-                """
-                Add element directly if it is already None or has a stack size of 0
-                """
-                new_pot_contenders.append(player)
-            else:
-                """
-                Add a "None" placeholder to preserve table order
-                """
-                new_pot_contenders.append(None)
-
-        self._pot_contenders.append(new_pot_contenders)
-
     def flip_board_cards(self, num_board_cards):
         """
         Burn a card
@@ -488,6 +456,7 @@ class GameData:
         Draw cards from the deck and add them to the board
         """
         board_cards = list()
+        
         for _ in range(num_board_cards):
             board_card = self._deck.draw_card()
             board_cards.append(board_card)
@@ -551,13 +520,12 @@ class GameData:
         """
         return (player_hand_triple_list, winner_positions)
 
-    def pass_pot_to_winners(self, pot_idx, player_pos_list=None):
+    def pass_pot_to_winners(self, pot_idx, player_pos_list=list()):
         """
         Give the winning players (at given indices) the number of chips in the pot and reset the pot
         divided by the number of ways to split (default 1 player wins so no split)
         """
-        # TODO: when all players but 2 fold then the last player folds on the flop, seems like 5 small blind chips are not moved?
-        if player_pos_list is None:
+        if len(player_pos_list) == 0:
             """
             If no position list was given, pass the pot to all remaining players (contenders)
             """
@@ -595,12 +563,12 @@ class GameData:
         """
         Assume all folded players have played (in order to be skipped)
         """
-        for i in range(num_contenders):
+        for contender_idx in range(num_contenders):
 
-            contender = self._pot_contenders[-1][i]
+            contender = self._pot_contenders[-1][contender_idx]
 
             if contender is None:
-                self._hand_players_played_move[i] = True
+                self._hand_players_played_move[contender_idx] = True
 
     def play_move(self, player_idx, move, amount):
         """
@@ -792,3 +760,38 @@ class GameData:
         
         self._deck.reset()
         self._deck.shuffle()
+
+    """
+    Private Methods
+    """
+    def _order_players(self, dealer_idx):
+        """
+        Rotate/Cut the list of players so that the player at the dealer index is first on the list
+        """
+        self._players = self._players[dealer_idx:] + self._players[:dealer_idx]
+
+    def _create_side_pot(self):
+        """
+        Create a side pot that is initially empty
+        """
+        self._pot.append(0)
+
+        """
+        Add a list of all players contending for this side pot (any players who still have chips)
+        """
+        new_pot_contenders = list()
+
+        for player in self._pot_contenders[-1]:
+
+            if player is None or ( player.get_stack_size() + player.get_action() ) > 0:
+                """
+                Add element directly if it is already None or has a stack size of 0
+                """
+                new_pot_contenders.append(player)
+            else:
+                """
+                Add a "None" placeholder to preserve table order
+                """
+                new_pot_contenders.append(None)
+
+        self._pot_contenders.append(new_pot_contenders)

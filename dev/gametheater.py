@@ -13,9 +13,26 @@ class GameTheater:
     Constructor
     """
     def __init__(self, setup, hands):
+        """
+        Properties
+        """
         self._setup = setup     ### Game setup data
         self._hands = hands     ### List of all played hands in the game
         self._ui    = GameUI()  ### Interface object to display game history
+
+    """
+    Public Methods
+    """
+    def playback_game(self):
+        """
+        Game Playback:
+            * Display how the game was set up
+            * Show the hand history of the game in order
+            * Display which player won the game
+        """
+        self._announce_setup()
+        self._display_hands()
+        self._display_winner()
 
     """
     Private Methods
@@ -79,27 +96,11 @@ class GameTheater:
             * The game has had at least one completed hand
             * There is one and only one player left after the most recent hand
         """
-        assert len(self._hands)                 > 0
         last_hand                               = self._hands[-1]
         _, _, _, _, _, player_state_final, _    = last_hand
-        assert len(player_state_final)          == 1
         winner                                  = player_state_final[0]
 
         """
         Display the winner
         """
         self._ui.display_winner(winner)
-
-    """
-    Public Methods
-    """
-    def playback_game(self):
-        """
-        Game Playback:
-            * Display how the game was set up
-            * Show the hand history of the game in order
-            * Display which player won the game
-        """
-        self._announce_setup()
-        self._display_hands()
-        self._display_winner()

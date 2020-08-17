@@ -50,8 +50,56 @@ class GameInput:
     Constructor
     """
     def __init__(self):
-        self._installed_hot_keys = dict()
-        self._pressed_keys = set()
+        """
+        Properties
+        """
+        self._installed_hot_keys    = dict()    ### Maps hot key combinations to functions that trigger when the hot key is detected
+        self._pressed_keys          = set()     ### Collection of keys that are currently being pressed
+
+    """
+    Public Methods
+    """
+    def get_input(self, input_msg):
+        """
+        Wrapper for the input() function:
+            This is done to easily switch between Python 2.7 (raw_input) and 3.x (input) if/when necessary
+        """
+        return input(input_msg)
+
+    def pair_hot_key_to_command(self, hot_key, command):
+        """
+        Add a key combo and callback function (executed on the press of the hot key) to the hot key list
+        """
+        self._installed_hot_keys.update({ hot_key : command })
+
+    def get_installed_hotkey_strings(self):
+        """
+        Convert installed hot keys to a list of string tuples
+        first value is a readable key combo string
+        second value is a description of the hot key's callback function
+        Local Variables
+        """
+        hot_keys = list()
+
+        """
+        Get the name and description of each hotkey
+        """
+        for hot_key in self._installed_hot_keys:
+            hotkey_name, description, _ = hot_key
+            hot_keys.append((hotkey_name, description))
+
+        """
+        Return Result
+        """
+        return hot_keys
+
+    def listen_for_hot_keys(self):
+        """
+        Create and start a hot key listener thread and have it die when the main thread is finished (daemon)
+        """
+        listener = Listener(on_press=self._handle_key_press, on_release=self._handle_key_release)
+        listener.setDaemon(True)
+        listener.start()
 
     """
     Private Methods
@@ -139,48 +187,3 @@ class GameInput:
         """
         if vk in self._pressed_keys:
             self._pressed_keys.remove(vk)
-
-    """
-    Public Methods
-    """
-    def get_input(self, input_msg):
-        """
-        Wrapper for the input() function:
-            This is done to easily switch between Python 2.7 (raw_input) and 3.x (input) if/when necessary
-        """
-        return input(input_msg)
-
-    def pair_hot_key_to_command(self, hot_key, command):
-        """
-        Add a key combo and callback function (executed on the press of the hot key) to the hot key list
-        """
-        self._installed_hot_keys.update({ hot_key : command })
-
-    def get_installed_hotkey_strings(self):
-        """
-        Convert installed hot keys to a list of string tuples
-        first value is a readable key combo string
-        second value is a description of the hot key's callback function
-        Local Variables
-        """
-        hot_keys = list()
-
-        """
-        Get the name and description of each hotkey
-        """
-        for hot_key in self._installed_hot_keys:
-            hotkey_name, description, _ = hot_key
-            hot_keys.append((hotkey_name, description))
-
-        """
-        Return Result
-        """
-        return hot_keys
-
-    def listen_for_hot_keys(self):
-        """
-        Create and start a hot key listener thread and have it die when the main thread is finished (daemon)
-        """
-        listener = Listener(on_press=self._handle_key_press, on_release=self._handle_key_release)
-        listener.setDaemon(True)
-        listener.start()

@@ -6,9 +6,9 @@ GameTimer:
 """
 Imports
 """
-from datetime import timedelta
-from threading import Timer
-from time import time
+from datetime   import timedelta
+from threading  import Timer
+from time       import time
 
 class GameTimer:
     """
@@ -21,6 +21,9 @@ class GameTimer:
     Constructor
     """
     def __init__(self, interval_time, callback, init_start_time=0):
+        """
+        Properties
+        """
         self._callback              = callback          ### Callback function to call when time is up
         self._current_interval_time = 0                 ### TIme value that the timer is currently set to
         self._init_start_time       = init_start_time   ### Time value to use first before using the normal interval time
@@ -51,17 +54,6 @@ class GameTimer:
         Return the minute and seconds in the time format
         """
         return GameTimer.TIME_STR % (minutes, seconds)
-
-    """
-    Private Methods
-    """
-    def _modified_callback(self):
-        """
-        Special callback function that invoke the callback function as normal
-        and also removes the initial start time to begin setting the timer at the norrmal interval
-        """
-        self._callback()
-        self._init_start_time = 0
 
     """
     Public Methods
@@ -138,3 +130,14 @@ class GameTimer:
         self._timer.daemon  = True
         self._start_time    = time()
         self._timer.start()
+
+    """
+    Private Methods
+    """
+    def _modified_callback(self):
+        """
+        Special callback function that invoke the callback function as normal
+        and also removes the initial start time to begin setting the timer at the norrmal interval
+        """
+        self._callback()
+        self._init_start_time = 0
